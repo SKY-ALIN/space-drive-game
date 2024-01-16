@@ -11,3 +11,5 @@ fix:
 	cargo fmt --all
 debug:
 	maturin develop
+test:
+	python -m pytest tests/python/
