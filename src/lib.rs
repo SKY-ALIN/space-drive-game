@@ -1,14 +1,18 @@
 use pyo3::prelude::*;
 
-/// Formats the sum of two numbers as string.
-#[pyfunction]
-fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-    Ok((a + b).to_string())
+pub fn get_version() -> String {
+    let version = env!("CARGO_PKG_VERSION").to_string();
+    version.replace("-alpha", "a").replace("-beta", "b")
 }
 
-/// A Python module implemented in Rust.
+pub fn get_authors() -> Vec<String> {
+    let authors = env!("CARGO_PKG_AUTHORS");
+    authors.split(':').map(str::to_string).collect()
+}
+
 #[pymodule]
 fn space_drive_game(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
+    m.add("__version__", get_version())?;
+    m.add("__authors__", get_authors())?;
     Ok(())
 }

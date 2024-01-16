@@ -4,11 +4,17 @@ build-backend = "maturin"
 
 [project]
 name = "space-drive-game"
+authors = [
+    {name = "Vladimir Alinsky", email = "Vladimir@Alinsky.tech"}
+]
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
 ]
 dynamic = ["version"]
 

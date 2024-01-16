@@ -9,3 +9,5 @@ lint:
 	cargo fmt --all --check
 fix:
 	cargo fmt --all
+debug:
+	maturin develop
