@@ -1,0 +1,16 @@
+[package]
+name = "space-drive-game"
+
+workspace = ".."
+
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[lib]
+name = "space_drive_game"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.20.2"
+rand = "0.8.5"

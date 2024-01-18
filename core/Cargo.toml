@@ -1,0 +1,13 @@
+[package]
+name = "space-drive-game-core"
+
+workspace = ".."
+
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[lib]
+name = "space_drive_game"
+
+[dependencies]

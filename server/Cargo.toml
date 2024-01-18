@@ -1,0 +1,10 @@
+[package]
+name = "space-drive-game-server"
+
+workspace = ".."
+
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]

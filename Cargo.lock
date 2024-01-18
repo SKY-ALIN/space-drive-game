@@ -242,6 +242,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "space-drive-game-core"
+version = "0.1.0"
+
+[[package]]
+name = "space-drive-game-server"
+version = "0.1.0"
+
+[[package]]
 name = "syn"
 version = "2.0.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
