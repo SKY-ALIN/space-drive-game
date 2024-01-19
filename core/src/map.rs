@@ -34,3 +34,35 @@ impl Map {
         todo!()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Map;
+
+    const WIDTH: u16 = 1000;
+    const HEIGHT: u16 = 1500;
+    const BARRIERS_AMOUNT: u8 = 5;
+    const MAX_BARRIER_RADIUS: u16 = 100;
+    
+    fn make_map() -> Map {
+        Map::new(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS)
+    }
+
+    #[test]
+    fn test_attrs() {
+        let m = make_map();
+        assert_eq!(m.width, WIDTH);
+        assert_eq!(m.height, HEIGHT);
+    }
+
+    #[test]
+    fn test_barriers() {
+        let m = make_map();
+        assert_eq!(m.barriers.len(), BARRIERS_AMOUNT as usize);
+        for b in m.barriers {
+            assert!(b.x <= WIDTH);
+            assert!(b.y <= HEIGHT);
+            assert!(b.r <= MAX_BARRIER_RADIUS);
+        }
+    }
+}
