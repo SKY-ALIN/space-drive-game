@@ -238,16 +238,19 @@ name = "space-drive-game"
 version = "0.1.0"
 dependencies = [
  "pyo3",
- "rand",
+ "space_drive_game_core",
 ]
-
-[[package]]
-name = "space-drive-game-core"
-version = "0.1.0"
 
 [[package]]
 name = "space-drive-game-server"
 version = "0.1.0"
+
+[[package]]
+name = "space_drive_game_core"
+version = "0.1.0"
+dependencies = [
+ "rand",
+]
 
 [[package]]
 name = "syn"

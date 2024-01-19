@@ -1,5 +1,5 @@
 [package]
-name = "space-drive-game-core"
+name = "space_drive_game_core"
 
 workspace = ".."
 
@@ -8,6 +8,7 @@ edition.workspace = true
 authors.workspace = true
 
 [lib]
-name = "space_drive_game"
+name = "space_drive_game_core"
 
 [dependencies]
+rand = "0.8.5"

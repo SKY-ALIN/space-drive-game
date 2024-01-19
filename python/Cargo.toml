@@ -13,4 +13,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = "0.20.2"
-rand = "0.8.5"
+
+[dependencies.space_drive_game_core]
+path = "../core"

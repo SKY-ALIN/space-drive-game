@@ -1,7 +1,7 @@
 from space_drive_game import Map
 
 
-def test_attrs(m: Map, width: int, height: int, barriers_amount: int, max_barrier_radius: int):
+def test_attrs(m: Map, width: int, height: int):
     assert m.width == width
     assert m.height == height
 

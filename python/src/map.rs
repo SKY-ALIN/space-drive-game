@@ -1,20 +1,9 @@
 use pyo3::prelude::*;
-use rand::prelude::*;
 
-struct Barrier {
-    x: u16,
-    y: u16,
-    r: u16,
-}
+use space_drive_game_core::map::Map as _Map;
 
 #[pyclass]
-pub struct Map {
-    #[pyo3(get)]
-    width: u16,
-    #[pyo3(get)]
-    height: u16,
-    barriers: Vec<Barrier>,
-}
+pub struct Map(pub _Map);
 
 #[pymethods]
 impl Map {
@@ -25,25 +14,29 @@ impl Map {
         barriers_amount: u8,
         max_barrier_radius: u16,
     ) -> PyResult<Self> {
-        let barriers = (0..barriers_amount)
-            .map(|_| Barrier {
-                x: rand::thread_rng().gen_range(0..width),
-                y: rand::thread_rng().gen_range(0..height),
-                r: rand::thread_rng().gen_range(0..max_barrier_radius),
-            })
-            .collect();
-        Ok(Map {
+        Ok(Map(_Map::new(
             width,
             height,
-            barriers,
-        })
+            barriers_amount,
+            max_barrier_radius,
+        )))
     }
 
     pub fn get_barriers(&self) -> Vec<(u16, u16, u16)> {
-        self.barriers.iter().map(|b| (b.x, b.y, b.r)).collect()
+        self.0.barriers.iter().map(|b| (b.x, b.y, b.r)).collect()
     }
 
     pub fn get_free_point(&self) -> (u16, u16) {
-        todo!()
+        self.0.get_free_point()
+    }
+
+    #[getter]
+    pub fn width(&self) -> u16 {
+        self.0.width
+    }
+
+    #[getter]
+    pub fn height(&self) -> u16 {
+        self.0.height
     }
 }
