@@ -43,7 +43,7 @@ mod tests {
     const HEIGHT: u16 = 1500;
     const BARRIERS_AMOUNT: u8 = 5;
     const MAX_BARRIER_RADIUS: u16 = 100;
-    
+
     fn make_map() -> Map {
         Map::new(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS)
     }

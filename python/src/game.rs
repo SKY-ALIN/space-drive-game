@@ -1,16 +1,26 @@
 use pyo3::prelude::*;
+use std::sync::{Arc, Mutex};
 
-use space_drive_game_core::game::Game as _Game;
+#[rustfmt::skip]
+use space_drive_game_core::game::{
+    Game      as _Game,
+    GameTrait as _GameTrait,
+};
 
 use super::map::Map;
+use super::player::Player;
 
 #[pyclass]
-pub struct Game(_Game);
+pub struct Game(Arc<Mutex<_Game>>);
 
 #[pymethods]
 impl Game {
     #[new]
     pub fn new(map: &Map) -> Self {
-        Game(_Game::new(map.0.clone()))
+        Game(_Game::create(map.0.clone()))
+    }
+
+    pub fn register_player(&self, player: &Player) {
+        self.0.register_player(&player.0)
     }
 }
