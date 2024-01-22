@@ -21,6 +21,10 @@ impl Game {
     }
 
     pub fn register_player(&self, player: &Player) {
-        self.0.register_player(&player.0)
+        self.0.register_player(&player.0);
+    }
+
+    fn process(&self) {
+        self.0.process();
     }
 }

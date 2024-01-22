@@ -4,24 +4,29 @@ use rand::prelude::*;
 
 use super::game::Game;
 
-#[derive(PartialEq)]
-pub enum PlayerError {
-    NonExistentAngle,
-}
-
 pub struct Player {
-    pub x: f32,
-    pub y: f32,
-    pub direction: f32,
+    pub x: f64,
+    pub y: f64,
+    pub direction: f64,
     game: Option<Weak<Mutex<Game>>>,
 }
 
 impl Player {
-    pub fn create(x: f32, y: f32) -> Arc<Mutex<Self>> {
+    pub fn create(x: f64, y: f64) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
             y,
-            direction: rand::thread_rng().gen_range(0f32..359f32),
+            direction: rand::thread_rng().gen_range(-180f64..180f64),
+            game: None,
+        };
+        Arc::new(Mutex::new(player))
+    }
+
+    pub fn create_with_direction(x: f64, y: f64, direction: f64) -> Arc<Mutex<Self>> {
+        let player = Player {
+            x,
+            y,
+            direction,
             game: None,
         };
         Arc::new(Mutex::new(player))
@@ -33,32 +38,28 @@ impl Player {
 }
 
 pub trait PlayerTrait {
-    fn get_x(self: &Arc<Self>) -> f32;
-    fn get_y(self: &Arc<Self>) -> f32;
-    fn get_direction(self: &Arc<Self>) -> f32;
-    fn rotate(self: &Arc<Self>, direction: f32) -> Result<(), PlayerError>;
+    fn get_x(self: &Arc<Self>) -> f64;
+    fn get_y(self: &Arc<Self>) -> f64;
+    fn get_direction(self: &Arc<Self>) -> f64;
+    fn rotate(self: &Arc<Self>, direction: f64);
     fn forward(self: &Arc<Self>);
 }
 
 impl PlayerTrait for Mutex<Player> {
-    fn get_x(self: &Arc<Self>) -> f32 {
+    fn get_x(self: &Arc<Self>) -> f64 {
         self.lock().unwrap().x
     }
 
-    fn get_y(self: &Arc<Self>) -> f32 {
+    fn get_y(self: &Arc<Self>) -> f64 {
         self.lock().unwrap().y
     }
 
-    fn get_direction(self: &Arc<Self>) -> f32 {
+    fn get_direction(self: &Arc<Self>) -> f64 {
         self.lock().unwrap().direction
     }
 
-    fn rotate(self: &Arc<Self>, direction: f32) -> Result<(), PlayerError> {
-        if direction < 0.0 || direction >= 360.0 {
-            return Err(PlayerError::NonExistentAngle);
-        }
-        self.lock().unwrap().direction = direction;
-        Ok(())
+    fn rotate(self: &Arc<Self>, direction: f64) {
+        self.lock().unwrap().direction += direction;
     }
 
     fn forward(self: &Arc<Self>) {
@@ -68,14 +69,15 @@ impl PlayerTrait for Mutex<Player> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Player, PlayerError, PlayerTrait};
+    use super::{Player, PlayerTrait};
     use std::sync::{Arc, Mutex};
 
-    const X: f32 = 100.0;
-    const Y: f32 = 200.0;
+    const X: f64 = 100.0;
+    const Y: f64 = 200.0;
+    const DIRECTION: f64 = 0.0;
 
     fn get_player() -> Arc<Mutex<Player>> {
-        Player::create(X, Y)
+        Player::create_with_direction(X, Y, DIRECTION)
     }
 
     #[test]
@@ -83,16 +85,15 @@ mod tests {
         let p = get_player();
         assert_eq!(p.get_x(), X);
         assert_eq!(p.get_y(), Y);
-        assert!(p.get_direction() < 360.0);
+        assert_eq!(p.get_direction(), DIRECTION);
     }
 
     #[test]
     fn test_rotation() {
         let p = get_player();
-        assert!(p.rotate(180.0).is_ok());
+        p.rotate(180.0);
         assert_eq!(p.get_direction(), 180.0);
-        assert!(p
-            .rotate(1000.0)
-            .is_err_and(|x| x == PlayerError::NonExistentAngle));
+        p.rotate(-360.0);
+        assert_eq!(p.get_direction(), -180.0);
     }
 }
