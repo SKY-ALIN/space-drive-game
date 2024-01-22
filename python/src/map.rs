@@ -29,14 +29,4 @@ impl Map {
     pub fn get_free_point(&self) -> (u16, u16) {
         self.0.get_free_point()
     }
-
-    #[getter]
-    pub fn width(&self) -> u16 {
-        self.0.width
-    }
-
-    #[getter]
-    pub fn height(&self) -> u16 {
-        self.0.height
-    }
 }

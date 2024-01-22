@@ -33,8 +33,8 @@ impl GameTrait for Mutex<Game> {
     fn process(self: &Arc<Self>) {
         for player_arc in self.lock().unwrap().players.iter() {
             let mut player = player_arc.lock().unwrap();
-            player.x += (player.direction * std::f64::consts::PI / 180.0).sin();
-            player.y += (player.direction * std::f64::consts::PI / 180.0).cos();
+            player.x += (player.direction * std::f64::consts::PI / 180.0).sin() * player.speed;
+            player.y += (player.direction * std::f64::consts::PI / 180.0).cos() * player.speed;
         }
     }
 }
@@ -47,13 +47,14 @@ mod tests {
 
     #[test]
     fn test_movement() {
-        let p = Player::create_with_direction(0.0, 0.0, 0.0);
-        let game = Game::create(Map::new(0, 0, 0, 0));
+        let p = Player::create_with_direction(0.0, 0.0, 1.0, 0.0);
+        let game = Game::create(Map::new(100, 100, 0, 0));
         game.register_player(&p);
+        p.set_speed(0.5);
         game.process();
         let _ = p.rotate(90.0);
         game.process();
-        assert_eq!(p.get_x(), 1.0);
-        assert_eq!(p.get_y(), 1.0);
+        assert_eq!(p.get_x(), 0.5);
+        assert_eq!(p.get_y(), 0.5);
     }
 }
