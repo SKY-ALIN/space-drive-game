@@ -13,10 +13,10 @@ pub struct Player(pub Arc<Mutex<_Player>>);
 #[pymethods]
 impl Player {
     #[new]
-    pub fn new(x: f64, y: f64, max_speed: f64, direction: Option<f64>) -> Self {
+    pub fn new(x: f64, y: f64, r: f64, max_speed: f64, direction: Option<f64>) -> Self {
         match direction {
-            Some(d) => Player(_Player::create_with_direction(x, y, max_speed, d)),
-            None => Player(_Player::create(x, y, max_speed)),
+            Some(d) => Player(_Player::create_with_direction(x, y, r, max_speed, d)),
+            None => Player(_Player::create(x, y, r, max_speed)),
         }
     }
 

@@ -2,25 +2,25 @@ use rand::prelude::*;
 
 #[derive(Copy, Clone)]
 pub struct Barrier {
-    pub x: u16,
-    pub y: u16,
-    pub r: u16,
+    pub x: f64,
+    pub y: f64,
+    pub r: f64,
 }
 
 #[derive(Clone)]
 pub struct Map {
-    pub width: u16,
-    pub height: u16,
+    pub width: f64,
+    pub height: f64,
     pub barriers: Vec<Barrier>,
 }
 
 impl Map {
-    pub fn new(width: u16, height: u16, barriers_amount: u8, max_barrier_radius: u16) -> Self {
+    pub fn new(width: f64, height: f64, barriers_amount: u8, max_barrier_radius: f64) -> Self {
         let barriers = (0..barriers_amount)
             .map(|_| Barrier {
-                x: rand::thread_rng().gen_range(0..width),
-                y: rand::thread_rng().gen_range(0..height),
-                r: rand::thread_rng().gen_range(0..max_barrier_radius),
+                x: rand::thread_rng().gen_range(0.0..width),
+                y: rand::thread_rng().gen_range(0.0..height),
+                r: rand::thread_rng().gen_range(0.0..max_barrier_radius),
             })
             .collect();
         Map {
@@ -30,7 +30,7 @@ impl Map {
         }
     }
 
-    pub fn get_free_point(&self) -> (u16, u16) {
+    pub fn get_free_point(&self) -> (f64, f64) {
         todo!()
     }
 }
@@ -39,10 +39,10 @@ impl Map {
 mod tests {
     use super::Map;
 
-    const WIDTH: u16 = 1000;
-    const HEIGHT: u16 = 1500;
+    const WIDTH: f64 = 1000.0;
+    const HEIGHT: f64 = 1500.0;
     const BARRIERS_AMOUNT: u8 = 5;
-    const MAX_BARRIER_RADIUS: u16 = 100;
+    const MAX_BARRIER_RADIUS: f64 = 100.0;
 
     fn make_map() -> Map {
         Map::new(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS)

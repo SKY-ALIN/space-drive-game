@@ -7,6 +7,7 @@ use super::game::Game;
 pub struct Player {
     pub x: f64,
     pub y: f64,
+    pub r: f64,
     pub direction: f64,
     pub speed: f64,
     max_speed: f64,
@@ -14,10 +15,11 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn create(x: f64, y: f64, max_speed: f64) -> Arc<Mutex<Self>> {
+    pub fn create(x: f64, y: f64, r: f64, max_speed: f64) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
             y,
+            r,
             direction: rand::thread_rng().gen_range(-180f64..180f64),
             speed: 0.0,
             max_speed,
@@ -26,10 +28,11 @@ impl Player {
         Arc::new(Mutex::new(player))
     }
 
-    pub fn create_with_direction(x: f64, y: f64, max_speed: f64, direction: f64) -> Arc<Mutex<Self>> {
+    pub fn create_with_direction(x: f64, y: f64, r: f64, max_speed: f64, direction: f64) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
             y,
+            r,
             direction,
             speed: 0.0,
             max_speed,
@@ -90,11 +93,12 @@ mod tests {
 
     const X: f64 = 100.0;
     const Y: f64 = 200.0;
+    const R: f64 = 1.0;
     const DIRECTION: f64 = 0.0;
     const MAX_SPEED: f64 = 0.0;
 
     fn get_player() -> Arc<Mutex<Player>> {
-        Player::create_with_direction(X, Y, MAX_SPEED, DIRECTION)
+        Player::create_with_direction(X, Y, R, MAX_SPEED, DIRECTION)
     }
 
     #[test]

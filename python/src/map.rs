@@ -9,10 +9,10 @@ pub struct Map(pub _Map);
 impl Map {
     #[new]
     pub fn new(
-        width: u16,
-        height: u16,
+        width: f64,
+        height: f64,
         barriers_amount: u8,
-        max_barrier_radius: u16,
+        max_barrier_radius: f64,
     ) -> PyResult<Self> {
         Ok(Map(_Map::new(
             width,
@@ -22,11 +22,11 @@ impl Map {
         )))
     }
 
-    pub fn get_barriers(&self) -> Vec<(u16, u16, u16)> {
+    pub fn get_barriers(&self) -> Vec<(f64, f64, f64)> {
         self.0.barriers.iter().map(|b| (b.x, b.y, b.r)).collect()
     }
 
-    pub fn get_free_point(&self) -> (u16, u16) {
+    pub fn get_free_point(&self) -> (f64, f64) {
         self.0.get_free_point()
     }
 }

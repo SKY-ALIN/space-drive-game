@@ -26,3 +26,8 @@ def max_barrier_radius():
 @fixture
 def m(width: int, height: int, barriers_amount: int, max_barrier_radius: int):
     return Map(width=width, height=height, barriers_amount=barriers_amount, max_barrier_radius=max_barrier_radius)
+
+
+@fixture
+def empty_map(width: int, height: int):
+    return Map(width=width, height=height, barriers_amount=0, max_barrier_radius=0)
