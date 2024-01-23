@@ -30,8 +30,19 @@ impl Map {
         }
     }
 
-    pub fn get_free_point(&self) -> (f64, f64) {
-        todo!()
+    pub fn get_free_point(&self, r: f64) -> (f64, f64) {
+        'outer: loop {
+            let x = rand::thread_rng().gen_range(r..self.width-r);
+            let y = rand::thread_rng().gen_range(r..self.height-r);
+
+            for barrier in self.barriers.iter() {
+                // If there are no collisions, return `x` and `y`
+                let distance = ((x - barrier.x).powi(2) + (y - barrier.y).powi(2)).sqrt();
+                if distance >= (r + barrier.r) {
+                    break 'outer (x, y);
+                }
+            }
+        }
     }
 }
 

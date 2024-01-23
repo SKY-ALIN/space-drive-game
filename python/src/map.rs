@@ -26,7 +26,7 @@ impl Map {
         self.0.barriers.iter().map(|b| (b.x, b.y, b.r)).collect()
     }
 
-    pub fn get_free_point(&self) -> (f64, f64) {
-        self.0.get_free_point()
+    pub fn get_free_point(&self, r: f64) -> (f64, f64) {
+        self.0.get_free_point(r)
     }
 }

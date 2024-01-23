@@ -15,4 +15,4 @@
 
 This repository contains the game core, the core wrapper for Python to train NNs, and the game server.
 
-There are no graphics utilities. To visualize space battles setup [space-drive-visualizer](https://github.com/vsezol/space-drive-visualizer) microservice.
+There are no graphics utilities. To visualize space battles setup [space-drive-visualizer](https://github.com/vsezol/space-drive-visualizer) service.
