@@ -28,7 +28,13 @@ impl Player {
         Arc::new(Mutex::new(player))
     }
 
-    pub fn create_with_direction(x: f64, y: f64, r: f64, max_speed: f64, direction: f64) -> Arc<Mutex<Self>> {
+    pub fn create_with_direction(
+        x: f64,
+        y: f64,
+        r: f64,
+        max_speed: f64,
+        direction: f64,
+    ) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
             y,
