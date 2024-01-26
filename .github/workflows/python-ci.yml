@@ -42,7 +42,7 @@ jobs:
       
 
       - name: Install & test (aarch64, armv7, s390x, ppc64le)
-        if: ${{ !startsWith(matrix.target, 'x86_64') && !startsWith(matrix.target, 'i686') }}
+        if: ${{ !startsWith(matrix.target, 'x86') && !startsWith(matrix.target, 'i686') }}
         uses: uraimo/run-on-arch-action@v2.5.0
         with:
           arch: ${{ matrix.target }}
