@@ -3,22 +3,16 @@ name: Code Quality
 on:
   push:
 
+env:
+    RUSTFLAGS: "-Dwarnings"
+
 jobs:
     clippy:
       name: Clippy check
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v2
-        - uses: actions-rs/toolchain@v1
-          with:
-            toolchain: stable
-            components: clippy
-            override: true
-        - uses: actions-rs/clippy-check@v1
-          with:
-            token: ${{ secrets.GITHUB_TOKEN }}
-            args: --all-features
-            name: Clippy Output
+        - uses: actions/checkout@v4
+        - run: cargo clippy --all-targets --all-features
   
     fmt:
       name: Rustfmt check
