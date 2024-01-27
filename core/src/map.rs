@@ -32,8 +32,8 @@ impl Map {
 
     pub fn get_free_point(&self, r: f64) -> (f64, f64) {
         'outer: loop {
-            let x = rand::thread_rng().gen_range(r..self.width-r);
-            let y = rand::thread_rng().gen_range(r..self.height-r);
+            let x = rand::thread_rng().gen_range(r..self.width - r);
+            let y = rand::thread_rng().gen_range(r..self.height - r);
 
             for barrier in self.barriers.iter() {
                 // If there are no collisions, return `x` and `y`
