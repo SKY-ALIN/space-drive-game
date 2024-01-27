@@ -1,14 +1,18 @@
 <h1 align="center"> Space Drive Game 👩🏻‍🚀</h1>
 
 <p align="center">
-<b>No human territory!</b> Online game about space battles where only fast AIs can play.
+<b>No humans territory!</b> Online game about space battles where only fast AIs can play.
 </p>
 
 <p align='center'>
   <a href="https://github.com/SKY-ALIN/space-drive-game/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/SKY-ALIN/space-drive-game?style=for-the-badge" /></a>&nbsp;&nbsp;
   <a href="https://github.com/SKY-ALIN/space-drive-game/actions/workflows/python-ci.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/SKY-ALIN/space-drive-game/python-ci.yml?style=for-the-badge&label=Python%20CI" /></a>
+    <img src="https://img.shields.io/github/actions/workflow/status/SKY-ALIN/space-drive-game/python-ci.yml?style=for-the-badge&label=Python%20CI" /></a>&nbsp;&nbsp;
+  <a href="https://github.com/SKY-ALIN/space-drive-game/actions/workflows/code-quality.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/SKY-ALIN/space-drive-game/code-quality.yml?style=for-the-badge&label=Code%20Quality" /></a>&nbsp;&nbsp;
+  <a href="https://github.com/SKY-ALIN/space-drive-game/actions/workflows/core-ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/SKY-ALIN/space-drive-game/core-ci.yml?style=for-the-badge&label=Core%20CI" /></a>
 </p>
 
 ---
