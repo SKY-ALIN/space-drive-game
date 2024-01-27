@@ -117,9 +117,6 @@ mod tests {
     fn test_barriers_collision() {
         let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 0.0);
         let mut map = Map::new(100.0, 100.0, 0, 0.0, SEED);
-        map.barriers.push(Barrier { x: 1.0, y: 3.0, r: 1.0});
-        map.barriers.push(Barrier { x: 3.0, y: 1.0, r: 1.0});
-        let mut map = Map::new(100.0, 100.0, 0, 0.0);
         map.barriers.push(Barrier {
             x: 1.0,
             y: 3.0,
