@@ -2,29 +2,34 @@ name: Code Quality
 
 on:
   push:
+    branches:
+      - '*'
+
+permissions:
+  contents: read
 
 env:
-    RUSTFLAGS: "-Dwarnings"
+  RUSTFLAGS: "-Dwarnings"
 
 jobs:
-    clippy:
-      name: Clippy check
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - run: cargo clippy --all-targets --all-features
+  clippy:
+    name: Clippy check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo clippy --all-targets --all-features
   
-    fmt:
-      name: Rustfmt check
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v2
-        - uses: actions-rs/toolchain@v1
-          with:
-            toolchain: stable
-            components: rustfmt
-            override: true
-        - uses: actions-rs/cargo@v1
-          with:
-            command: fmt
-            args: --all -- --check
+  fmt:
+    name: Rustfmt check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
