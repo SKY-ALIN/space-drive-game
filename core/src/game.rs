@@ -77,7 +77,7 @@ mod tests {
 
     use super::{Game, GameTrait};
 
-    const SEED: u64 = 12345; // Фиксированный seed для воспроизводимости
+    const SEED: u64 = 12345;
 
     #[test]
     fn test_movement() {

@@ -19,30 +19,41 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new(width: f64, height: f64, barriers_amount: u8, max_barrier_radius: f64, seed: u64) -> Self {
+    pub fn new(
+        width: f64,
+        height: f64,
+        barriers_amount: u8,
+        max_barrier_radius: f64,
+        seed: u64,
+    ) -> Self {
         let mut rng = StdRng::seed_from_u64(seed);
         let perlin = Perlin::new(seed as u32);
         let noise_scale = 0.1; // Noise scale to adjust the "smoothness" of the noise
 
         let barriers = (0..barriers_amount).map(|_| {
-            let x = rng.gen_range(0.0..width);
-            let y = rng.gen_range(0.0..height);
-            let noise_value = perlin.get([x as f64 * noise_scale, y as f64 * noise_scale]);
-            let r = (noise_value / 2.0 + 0.5) * max_barrier_radius; // Noise normalization from -1..1 to 0..max_barrier_radius
-            Barrier { x, y, r }
-        }).collect();
+                let x = rng.gen_range(0.0..width);
+                let y = rng.gen_range(0.0..height);
+                let noise_value = perlin.get([x as f64 * noise_scale, y as f64 * noise_scale]);
+                let r = (noise_value / 2.0 + 0.5) * max_barrier_radius; // Noise normalization from -1..1 to 0..max_barrier_radius
+                Barrier { x, y, r }
+            }).collect();
 
         Map {
             width,
             height,
             barriers,
-            seed
+            seed,
         }
     }
 
-    pub fn new_without_seed(width: f64, height: f64, barriers_amount: u8, max_barrier_radius: f64) -> Self {
+    pub fn new_without_seed(
+        width: f64,
+        height: f64,
+        barriers_amount: u8,
+        max_barrier_radius: f64,
+    ) -> Self {
         let seed: u64 = rand::random::<u64>();
-        
+
         Self::new(width, height, barriers_amount, max_barrier_radius, seed)
     }
 
@@ -98,7 +109,13 @@ mod tests {
     fn test_generation_with_seed() {
         // Creating two cards with the same seed
         let map1 = Map::new_without_seed(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS);
-        let map2 = Map::new(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS, map1.seed);
+        let map2 = Map::new(
+            WIDTH,
+            HEIGHT,
+            BARRIERS_AMOUNT,
+            MAX_BARRIER_RADIUS,
+            map1.seed,
+        );
 
         // We check that the number of obstacles is the same
         assert_eq!(map1.barriers.len(), map2.barriers.len());
