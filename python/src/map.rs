@@ -13,13 +13,23 @@ impl Map {
         height: f64,
         barriers_amount: u8,
         max_barrier_radius: f64,
+        seed: Option<u64>,
     ) -> PyResult<Self> {
-        Ok(Map(_Map::new(
-            width,
-            height,
-            barriers_amount,
-            max_barrier_radius,
-        )))
+        match seed {
+            Some(s) => Ok(Map(_Map::new(
+                width,
+                height,
+                barriers_amount,
+                max_barrier_radius,
+                s,
+            ))),
+            None => Ok(Map(_Map::new_without_seed(
+                width,
+                height,
+                barriers_amount,
+                max_barrier_radius,
+            ))),
+        }
     }
 
     pub fn get_barriers(&self) -> Vec<(f64, f64, f64)> {
