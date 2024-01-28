@@ -8,6 +8,7 @@ def test_barriers(m: Map, width: int, height: int, barriers_amount: int, max_bar
         assert y >= 0 and y <= height
         assert r >= 0 and r <= max_barrier_radius
 
+
 def test_generation_with_seed():
     # Creating two maps with the same seed
     map1 = Map.new_without_seed(width, height, barriers_amount, max_barrier_radius)
