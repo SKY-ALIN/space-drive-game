@@ -3,6 +3,13 @@ use std::sync::{Arc, Mutex, Weak};
 use rand::prelude::*;
 
 use super::game::Game;
+use super::ray_marching::{ray_marching, RayHit};
+
+pub enum ViewHit {
+    Barrier(f64),
+    Border(f64),
+    Enemy(f64),
+}
 
 pub struct Player {
     pub x: f64,
@@ -11,7 +18,7 @@ pub struct Player {
     pub direction: f64,
     pub speed: f64,
     max_speed: f64,
-    game: Option<Weak<Mutex<Game>>>,
+    game: Weak<Mutex<Game>>,
 }
 
 impl Player {
@@ -23,7 +30,7 @@ impl Player {
             direction: rand::thread_rng().gen_range(-180f64..180f64),
             speed: 0.0,
             max_speed,
-            game: None,
+            game: Weak::new(),
         };
         Arc::new(Mutex::new(player))
     }
@@ -42,13 +49,13 @@ impl Player {
             direction,
             speed: 0.0,
             max_speed,
-            game: None,
+            game: Weak::new(),
         };
         Arc::new(Mutex::new(player))
     }
 
     pub fn mount_game(&mut self, game: Arc<Mutex<Game>>) {
-        self.game = Some(Arc::downgrade(&game));
+        self.game = Arc::downgrade(&game);
     }
 }
 
@@ -59,6 +66,7 @@ pub trait PlayerTrait {
     fn rotate(self: &Arc<Self>, direction: f64);
     fn get_speed(self: &Arc<Self>) -> f64;
     fn set_speed(self: &Arc<Self>, speed: f64);
+    fn view(self: &Arc<Self>) -> Vec<ViewHit>;
 }
 
 impl PlayerTrait for Mutex<Player> {
@@ -89,6 +97,45 @@ impl PlayerTrait for Mutex<Player> {
         } else {
             player.speed = player.max_speed;
         }
+    }
+
+    fn view(self: &Arc<Self>) -> Vec<ViewHit> {
+        const N_RAYS: u16 = 7;
+        const VIEW_ANGEL: f64 = 30.0;
+
+        // Get player's data
+        let player = self.lock().unwrap();
+        let weak_game = player.game.upgrade();
+        if weak_game.is_none() {
+            return Vec::new();
+        }
+        let game = weak_game.unwrap();
+        let player_direction = player.direction;
+        let player_radius = player.r;
+        let player_x = player.x;
+        let player_y = player.y;
+        drop(player);
+
+        let mut res = Vec::new();
+        for i in 0..N_RAYS {
+            let angel_offset = VIEW_ANGEL / (N_RAYS as f64);
+            let norm_i: f64 = (i - (N_RAYS / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
+            let ray_direction = player_direction + norm_i * angel_offset;
+            let ray_hit = ray_marching(&game, player_x, player_y, ray_direction, player_radius);
+
+            match ray_hit {
+                RayHit::Barrier(x, y) => res.push(ViewHit::Barrier(
+                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt(),
+                )),
+                RayHit::Border(x, y) => res.push(ViewHit::Border(
+                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt(),
+                )),
+                RayHit::Player(x, y) => res.push(ViewHit::Enemy(
+                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt(),
+                )),
+            }
+        }
+        res
     }
 }
 
