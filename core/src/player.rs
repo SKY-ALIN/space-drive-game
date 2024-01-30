@@ -5,6 +5,7 @@ use rand::prelude::*;
 use super::game::Game;
 use super::ray_marching::{ray_marching, RayHit};
 
+#[derive(Debug)]
 pub enum ViewHit {
     Barrier(f64),
     Border(f64),
@@ -101,7 +102,7 @@ impl PlayerTrait for Mutex<Player> {
 
     fn view(self: &Arc<Self>) -> Vec<ViewHit> {
         const N_RAYS: u16 = 7;
-        const VIEW_ANGEL: f64 = 30.0;
+        const VIEW_ANGEL: f64 = 60.0;
 
         // Get player's data
         let player = self.lock().unwrap();
@@ -116,10 +117,11 @@ impl PlayerTrait for Mutex<Player> {
         let player_y = player.y;
         drop(player);
 
+        // Send rays and aggregate hits
         let mut res = Vec::new();
         for i in 0..N_RAYS {
-            let angel_offset = VIEW_ANGEL / (N_RAYS as f64);
-            let norm_i: f64 = (i - (N_RAYS / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
+            let angel_offset = VIEW_ANGEL / ((N_RAYS - 1) as f64);
+            let norm_i: f64 = (i as i16 - (N_RAYS as i16 / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
             let ray_direction = player_direction + norm_i * angel_offset;
             let ray_hit = ray_marching(&game, player_x, player_y, ray_direction, player_radius);
 
@@ -141,6 +143,11 @@ impl PlayerTrait for Mutex<Player> {
 
 #[cfg(test)]
 mod tests {
+    use crate::{
+        game::{Game, GameTrait},
+        map::Map,
+    };
+
     use super::{Player, PlayerTrait};
     use std::sync::{Arc, Mutex};
 
@@ -170,5 +177,14 @@ mod tests {
         assert_eq!(p.get_direction(), 180.0);
         p.rotate(-360.0);
         assert_eq!(p.get_direction(), -180.0);
+    }
+
+    #[test]
+    fn test_view() {
+        let map = Map::new(150.0, 250.0, 0, 0.0);
+        let game = Game::create(map);
+        let p = get_player();
+        game.register_player(&p);
+        println!("{:?}", p.view());
     }
 }
