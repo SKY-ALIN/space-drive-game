@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 
 use rand::prelude::*;
@@ -20,6 +21,12 @@ pub struct Player {
     pub speed: f64,
     max_speed: f64,
     game: Weak<Mutex<Game>>,
+    pub id: usize,
+}
+
+fn get_id() -> usize {
+    static COUNTER: AtomicUsize = AtomicUsize::new(1);
+    COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
 impl Player {
@@ -32,6 +39,7 @@ impl Player {
             speed: 0.0,
             max_speed,
             game: Weak::new(),
+            id: get_id(),
         };
         Arc::new(Mutex::new(player))
     }
@@ -51,6 +59,7 @@ impl Player {
             speed: 0.0,
             max_speed,
             game: Weak::new(),
+            id: get_id(),
         };
         Arc::new(Mutex::new(player))
     }
@@ -116,6 +125,7 @@ impl PlayerTrait for Mutex<Player> {
         let player_radius = player.r;
         let player_x = player.x;
         let player_y = player.y;
+        let player_id = player.id;
         drop(player);
 
         // Send rays and aggregate hits
@@ -125,17 +135,17 @@ impl PlayerTrait for Mutex<Player> {
             let angel_offset = VIEW_ANGEL / ((N_RAYS - 1) as f64);
             let norm_i: f64 = (i as i16 - (N_RAYS as i16 / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
             let ray_direction = player_direction + norm_i * angel_offset;
-            let ray_hit = ray_marching(&game, player_x, player_y, ray_direction, player_radius);
+            let ray_hit = ray_marching(&game, player_x, player_y, ray_direction, player_id);
 
             match ray_hit {
                 RayHit::Barrier(x, y) => res.push(ViewHit::Barrier(
-                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt(),
+                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt() - player_radius,
                 )),
                 RayHit::Border(x, y) => res.push(ViewHit::Border(
-                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt(),
+                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt() - player_radius,
                 )),
                 RayHit::Player(x, y) => res.push(ViewHit::Enemy(
-                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt(),
+                    ((player_x - x).powi(2) + (player_y - y).powi(2)).sqrt() - player_radius,
                 )),
             }
         }
@@ -183,15 +193,17 @@ mod tests {
 
     #[test]
     fn test_view() {
-        let mut map = Map::new(150.0, 250.0, 0, 0.0);
-        map.barriers.push(Barrier {
-            x: 100.0,
-            y: 250.0,
-            r: 25.0,
-        });
+        let map = Map::new(150.0, 250.0, 0, 0.0);
+        // map.barriers.push(Barrier {
+        //     x: 100.0,
+        //     y: 250.0,
+        //     r: 25.0,
+        // });
         let game = Game::create(map);
         let p = get_player();
+        let p2 = Player::create(100.0, 250.0, 25.0, 1.0);
         game.register_player(&p);
+        game.register_player(&p2);
         println!("{:?}", p.view());
     }
 }

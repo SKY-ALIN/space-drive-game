@@ -5,7 +5,7 @@ use super::player::Player;
 
 pub struct Game {
     pub map: Map,
-    players: Vec<Arc<Mutex<Player>>>,
+    pub players: Vec<Arc<Mutex<Player>>>,
 }
 
 impl Game {
