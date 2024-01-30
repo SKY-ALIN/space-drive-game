@@ -20,6 +20,8 @@ pub struct Player {
     pub direction: f64,
     pub speed: f64,
     max_speed: f64,
+    view_angel: f64,
+    rays_amount: u16,
     game: Weak<Mutex<Game>>,
     pub id: usize,
 }
@@ -30,7 +32,14 @@ fn get_id() -> usize {
 }
 
 impl Player {
-    pub fn create(x: f64, y: f64, r: f64, max_speed: f64) -> Arc<Mutex<Self>> {
+    pub fn create(
+        x: f64,
+        y: f64,
+        r: f64,
+        max_speed: f64,
+        view_angel: f64,
+        rays_amount: u16,
+    ) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
             y,
@@ -38,6 +47,8 @@ impl Player {
             direction: rand::thread_rng().gen_range(-180f64..180f64),
             speed: 0.0,
             max_speed,
+            view_angel,
+            rays_amount,
             game: Weak::new(),
             id: get_id(),
         };
@@ -50,6 +61,8 @@ impl Player {
         r: f64,
         max_speed: f64,
         direction: f64,
+        view_angel: f64,
+        rays_amount: u16,
     ) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
@@ -58,6 +71,8 @@ impl Player {
             direction,
             speed: 0.0,
             max_speed,
+            view_angel,
+            rays_amount,
             game: Weak::new(),
             id: get_id(),
         };
@@ -110,9 +125,6 @@ impl PlayerTrait for Mutex<Player> {
     }
 
     fn view(self: &Arc<Self>) -> Vec<ViewHit> {
-        const N_RAYS: u16 = 7;
-        const VIEW_ANGEL: f64 = 60.0;
-
         // Get player's data
 
         let player = self.lock().unwrap();
@@ -125,15 +137,17 @@ impl PlayerTrait for Mutex<Player> {
         let player_radius = player.r;
         let player_x = player.x;
         let player_y = player.y;
+        let player_rays_amount = player.rays_amount;
+        let player_view_angel = player.view_angel;
         let player_id = player.id;
         drop(player);
 
         // Send rays and aggregate hits
 
         let mut res = Vec::new();
-        for i in 0..N_RAYS {
-            let angel_offset = VIEW_ANGEL / ((N_RAYS - 1) as f64);
-            let norm_i: f64 = (i as i16 - (N_RAYS as i16 / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
+        for i in 0..player_rays_amount {
+            let angel_offset = player_view_angel / ((player_rays_amount - 1) as f64);
+            let norm_i: f64 = (i as i16 - (player_rays_amount as i16 / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
             let ray_direction = player_direction + norm_i * angel_offset;
             let ray_hit = ray_marching(&game, player_x, player_y, ray_direction, player_id);
 
@@ -157,7 +171,7 @@ impl PlayerTrait for Mutex<Player> {
 mod tests {
     use crate::{
         game::{Game, GameTrait},
-        map::{Barrier, Map},
+        map::Map,
     };
 
     use super::{Player, PlayerTrait};
@@ -168,9 +182,11 @@ mod tests {
     const R: f64 = 1.0;
     const DIRECTION: f64 = 0.0;
     const MAX_SPEED: f64 = 0.0;
+    const VIEW_ANGEL: f64 = 60.0;
+    const RAYS_AMOUNT: u16 = 7;
 
     fn get_player() -> Arc<Mutex<Player>> {
-        Player::create_with_direction(X, Y, R, MAX_SPEED, DIRECTION)
+        Player::create_with_direction(X, Y, R, MAX_SPEED, DIRECTION, VIEW_ANGEL, RAYS_AMOUNT)
     }
 
     #[test]
@@ -201,9 +217,9 @@ mod tests {
         // });
         let game = Game::create(map);
         let p = get_player();
-        let p2 = Player::create(100.0, 250.0, 25.0, 1.0);
+        // let p2 = Player::create(100.0, 250.0, 25.0, 1.0);
         game.register_player(&p);
-        game.register_player(&p2);
+        // game.register_player(&p2);
         println!("{:?}", p.view());
     }
 }

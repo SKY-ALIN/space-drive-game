@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn test_movement() {
-        let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 0.0);
+        let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 0.0, 60.0, 7);
         let game = Game::create(Map::new(100.0, 100.0, 0, 0.0));
         game.register_player(&p);
         p.set_speed(0.5);
@@ -99,7 +99,7 @@ mod tests {
 
     #[test]
     fn test_borders_collision() {
-        let p = Player::create_with_direction(1.0, 1.0, 0.5, 1.0, -180.0);
+        let p = Player::create_with_direction(1.0, 1.0, 0.5, 1.0, -180.0, 60.0, 7);
         let game = Game::create(Map::new(100.0, 100.0, 0, 0.0));
         game.register_player(&p);
         p.set_speed(1.0);
@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn test_barriers_collision() {
-        let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 0.0);
+        let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 0.0, 60.0, 7);
         let mut map = Map::new(100.0, 100.0, 0, 0.0);
         map.barriers.push(Barrier {
             x: 1.0,
