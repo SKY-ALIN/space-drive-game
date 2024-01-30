@@ -29,6 +29,8 @@ pub fn ray_marching(
         next_x += (direction * std::f64::consts::PI / 180.0).sin() * min_distance;
         next_y += (direction * std::f64::consts::PI / 180.0).cos() * min_distance;
 
+        // Find min distance to borders and check the limit
+
         let border_dx = map_x - (next_x - map_x).abs();
         let border_dy = map_y - (next_y - map_y).abs();
         min_distance = if border_dx < border_dy {
@@ -39,6 +41,19 @@ pub fn ray_marching(
 
         if min_distance <= DISTANCE_LIMIT {
             break RayHit::Border(next_x, next_y);
+        }
+
+        // Find min distance to barriers and check the limit
+
+        for barrier in game.map.barriers.iter() {
+            let barrier_distance = ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt() - barrier.r;
+            if barrier_distance < min_distance {
+                min_distance = barrier_distance;
+            }
+        }
+
+        if min_distance <= DISTANCE_LIMIT {
+            break RayHit::Barrier(next_x, next_y);
         }
     }
 }

@@ -105,6 +105,7 @@ impl PlayerTrait for Mutex<Player> {
         const VIEW_ANGEL: f64 = 60.0;
 
         // Get player's data
+
         let player = self.lock().unwrap();
         let weak_game = player.game.upgrade();
         if weak_game.is_none() {
@@ -118,6 +119,7 @@ impl PlayerTrait for Mutex<Player> {
         drop(player);
 
         // Send rays and aggregate hits
+
         let mut res = Vec::new();
         for i in 0..N_RAYS {
             let angel_offset = VIEW_ANGEL / ((N_RAYS - 1) as f64);
@@ -145,7 +147,7 @@ impl PlayerTrait for Mutex<Player> {
 mod tests {
     use crate::{
         game::{Game, GameTrait},
-        map::Map,
+        map::{Barrier, Map},
     };
 
     use super::{Player, PlayerTrait};
@@ -181,7 +183,12 @@ mod tests {
 
     #[test]
     fn test_view() {
-        let map = Map::new(150.0, 250.0, 0, 0.0);
+        let mut map = Map::new(150.0, 250.0, 0, 0.0);
+        map.barriers.push(Barrier {
+            x: 100.0,
+            y: 250.0,
+            r: 25.0,
+        });
         let game = Game::create(map);
         let p = get_player();
         game.register_player(&p);
