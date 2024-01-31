@@ -1,0 +1,16 @@
+name: Core CI
+
+on:
+  push:
+    branches:
+      - '*'
+
+permissions:
+    contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test --package space_drive_game_core

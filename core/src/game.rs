@@ -36,8 +36,10 @@ impl GameTrait for Mutex<Game> {
             let mut player = player_arc.lock().unwrap();
 
             // Calculate next coordinates
-            let mut next_x = player.x + (player.direction * std::f64::consts::PI / 180.0).sin() * player.speed;
-            let mut next_y = player.y + (player.direction * std::f64::consts::PI / 180.0).cos() * player.speed;
+            let mut next_x =
+                player.x + (player.direction * std::f64::consts::PI / 180.0).sin() * player.speed;
+            let mut next_y =
+                player.y + (player.direction * std::f64::consts::PI / 180.0).cos() * player.speed;
 
             // Borders collision detection and handling
             if next_x - player.r < 0.0 {
@@ -73,12 +75,14 @@ impl GameTrait for Mutex<Game> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{player::{Player, PlayerTrait}, map::{Map, Barrier}};
+    use crate::{
+        map::{Barrier, Map},
+        player::{Player, PlayerTrait},
+    };
 
     use super::{Game, GameTrait};
 
     const SEED: u64 = 12345;
-
     #[test]
     fn test_movement() {
         let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 0.0);
