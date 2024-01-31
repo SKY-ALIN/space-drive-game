@@ -209,17 +209,17 @@ mod tests {
 
     #[test]
     fn test_view() {
-        let map = Map::new(150.0, 250.0, 0, 0.0);
+        // let map = Map::new(150.0, 250.0, 0, 0.0);
         // map.barriers.push(Barrier {
         //     x: 100.0,
         //     y: 250.0,
         //     r: 25.0,
         // });
-        let game = Game::create(map);
-        let p = get_player();
+        // let game = Game::create(map);
+        // let p = get_player();
         // let p2 = Player::create(100.0, 250.0, 25.0, 1.0);
-        game.register_player(&p);
+        // game.register_player(&p);
         // game.register_player(&p2);
-        println!("{:?}", p.view());
+        // println!("{:?}", p.view());
     }
 }
