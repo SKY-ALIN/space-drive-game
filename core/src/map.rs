@@ -30,13 +30,15 @@ impl Map {
         let perlin = Perlin::new(seed as u32);
         let noise_scale = 0.1; // Noise scale to adjust the "smoothness" of the noise
 
-        let barriers = (0..barriers_amount).map(|_| {
+        let barriers = (0..barriers_amount)
+            .map(|_| {
                 let x: f64 = rng.gen_range(0.0..width);
                 let y: f64 = rng.gen_range(0.0..height);
                 let noise_value = perlin.get([x * noise_scale, y * noise_scale]);
                 let r = (noise_value / 2.0 + 0.5) * max_barrier_radius; // Noise normalization from -1..1 to 0..max_barrier_radius
                 Barrier { x, y, r }
-            }).collect();
+            })
+            .collect();
 
         Map {
             width,
