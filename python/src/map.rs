@@ -39,4 +39,9 @@ impl Map {
     pub fn get_free_point(&self, r: f64) -> (f64, f64) {
         self.0.get_free_point(r)
     }
+
+    #[getter]
+    pub fn seed(&self) -> u64 {
+        self.0.seed
+    }
 }

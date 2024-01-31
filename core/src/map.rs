@@ -31,9 +31,9 @@ impl Map {
         let noise_scale = 0.1; // Noise scale to adjust the "smoothness" of the noise
 
         let barriers = (0..barriers_amount).map(|_| {
-                let x = rng.gen_range(0.0..width);
-                let y = rng.gen_range(0.0..height);
-                let noise_value = perlin.get([x as f64 * noise_scale, y as f64 * noise_scale]);
+                let x: f64 = rng.gen_range(0.0..width);
+                let y: f64 = rng.gen_range(0.0..height);
+                let noise_value = perlin.get([x * noise_scale, y * noise_scale]);
                 let r = (noise_value / 2.0 + 0.5) * max_barrier_radius; // Noise normalization from -1..1 to 0..max_barrier_radius
                 Barrier { x, y, r }
             }).collect();
@@ -81,7 +81,7 @@ mod tests {
     const HEIGHT: f64 = 1500.0;
     const BARRIERS_AMOUNT: u8 = 5;
     const MAX_BARRIER_RADIUS: f64 = 100.0;
-    const SEED: u64 = 12345; // Fixed seed for reproducibility`
+    const SEED: u64 = 12345; // Fixed seed for reproducibility
 
     fn make_map() -> Map {
         Map::new(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS, SEED)
