@@ -6,11 +6,24 @@ use rand::prelude::*;
 use super::game::Game;
 use super::ray_marching::{ray_marching, RayHit};
 
+fn get_id() -> usize {
+    static COUNTER: AtomicUsize = AtomicUsize::new(1);
+    COUNTER.fetch_add(1, Ordering::Relaxed)
+}
+
 #[derive(Debug, PartialEq)]
 pub enum ViewHit {
     Barrier(f64),
     Border(f64),
     Enemy(f64),
+}
+
+pub struct Missile {
+    pub x: f64,
+    pub y: f64,
+    pub direction: f64,
+    pub id: usize,
+    pub player_id: usize,
 }
 
 pub struct Player {
@@ -24,11 +37,6 @@ pub struct Player {
     rays_amount: u16,
     game: Weak<Mutex<Game>>,
     pub id: usize,
-}
-
-fn get_id() -> usize {
-    static COUNTER: AtomicUsize = AtomicUsize::new(1);
-    COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
 impl Player {
@@ -92,6 +100,7 @@ pub trait PlayerTrait {
     fn get_speed(self: &Arc<Self>) -> f64;
     fn set_speed(self: &Arc<Self>, speed: f64);
     fn view(self: &Arc<Self>) -> Vec<ViewHit>;
+    fn fire(self: &Arc<Self>);
 }
 
 impl PlayerTrait for Mutex<Player> {
@@ -168,6 +177,23 @@ impl PlayerTrait for Mutex<Player> {
             }
         }
         res
+    }
+
+    fn fire(self: &Arc<Self>) {
+        let player = self.lock().unwrap();
+        let weak_game = player.game.upgrade();
+        if weak_game.is_none() {
+            return;
+        }
+        let mutex_game = weak_game.unwrap();
+        let mut game = mutex_game.lock().unwrap();
+        game.missiles.push(Missile {
+            x: player.x,
+            y: player.y,
+            direction: player.direction,
+            id: get_id(),
+            player_id: player.id,
+        })
     }
 }
 
