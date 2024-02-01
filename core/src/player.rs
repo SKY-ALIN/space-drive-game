@@ -6,7 +6,7 @@ use rand::prelude::*;
 use super::game::Game;
 use super::ray_marching::{ray_marching, RayHit};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ViewHit {
     Barrier(f64),
     Border(f64),
@@ -60,9 +60,9 @@ impl Player {
         y: f64,
         r: f64,
         max_speed: f64,
-        direction: f64,
         view_angel: f64,
         rays_amount: u16,
+        direction: f64,
     ) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
@@ -146,7 +146,11 @@ impl PlayerTrait for Mutex<Player> {
 
         let mut res = Vec::new();
         for i in 0..player_rays_amount {
-            let angel_offset = player_view_angel / ((player_rays_amount - 1) as f64);
+            let angel_offset = if player_rays_amount > 1 {
+                player_view_angel / ((player_rays_amount - 1) as f64)
+            } else {
+                player_view_angel
+            };
             let norm_i: f64 = (i as i16 - (player_rays_amount as i16 / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
             let ray_direction = player_direction + norm_i * angel_offset;
             let ray_hit = ray_marching(&game, player_x, player_y, ray_direction, player_id);
@@ -171,10 +175,10 @@ impl PlayerTrait for Mutex<Player> {
 mod tests {
     use crate::{
         game::{Game, GameTrait},
-        map::Map,
+        map::{Barrier, Map},
     };
 
-    use super::{Player, PlayerTrait};
+    use super::{Player, PlayerTrait, ViewHit};
     use std::sync::{Arc, Mutex};
 
     const X: f64 = 100.0;
@@ -186,7 +190,7 @@ mod tests {
     const RAYS_AMOUNT: u16 = 7;
 
     fn get_player() -> Arc<Mutex<Player>> {
-        Player::create_with_direction(X, Y, R, MAX_SPEED, DIRECTION, VIEW_ANGEL, RAYS_AMOUNT)
+        Player::create_with_direction(X, Y, R, MAX_SPEED, VIEW_ANGEL, RAYS_AMOUNT, DIRECTION)
     }
 
     #[test]
@@ -209,17 +213,23 @@ mod tests {
 
     #[test]
     fn test_view() {
-        // let map = Map::new(150.0, 250.0, 0, 0.0);
-        // map.barriers.push(Barrier {
-        //     x: 100.0,
-        //     y: 250.0,
-        //     r: 25.0,
-        // });
-        // let game = Game::create(map);
-        // let p = get_player();
-        // let p2 = Player::create(100.0, 250.0, 25.0, 1.0);
-        // game.register_player(&p);
-        // game.register_player(&p2);
-        // println!("{:?}", p.view());
+        let mut map = Map::new_without_seed(100.0, 100.0, 0, 0.0);
+        map.barriers.push(Barrier {
+            x: 50.0,
+            y: 100.0,
+            r: 10.0,
+        });
+        let game = Game::create(map);
+        let p =
+            Player::create_with_direction(50.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGEL, 1, DIRECTION);
+        let p2 = Player::create(100.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGEL, 0);
+        game.register_player(&p);
+        game.register_player(&p2);
+
+        assert_eq!(p.view().first().unwrap(), &ViewHit::Barrier(30.0));
+        p.rotate(90.0);
+        assert_eq!(p.view().first().unwrap(), &ViewHit::Enemy(30.0));
+        p.rotate(90.0);
+        assert_eq!(p.view().first().unwrap(), &ViewHit::Border(40.0));
     }
 }

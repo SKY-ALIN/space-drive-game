@@ -30,9 +30,9 @@ impl Player {
                 y,
                 r,
                 max_speed,
-                d,
                 view_angel,
                 rays_amount,
+                d,
             )),
             None => Player(_Player::create(x, y, r, max_speed, view_angel, rays_amount)),
         }
