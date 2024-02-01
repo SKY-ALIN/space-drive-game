@@ -1,4 +1,4 @@
-from space_drive_game import Player
+from space_drive_game import Player, Map, Game
 
 
 def test_attrs():
@@ -18,3 +18,16 @@ def test_rotation():
     assert p.direction == init_direction + 180
     p.rotate(-360)
     assert p.direction == init_direction - 180
+
+
+def test_view(empty_map: Map, width: int, height: int):
+    game = Game(empty_map)
+    p = Player(x=width-50, y=height-50, r=10, max_speed=1, view_angel=60, rays_amount=1, direction=0)
+    p2 = Player(x=width, y=height-50, r=10, max_speed=1, view_angel=60, rays_amount=1)
+    game.register_player(p)
+    game.register_player(p2)
+
+    assert p.view() == [('[BORDER]', 40.0)]
+    p.rotate(90)
+    assert p.view() == [('[ENEMY]', 30.0)]
+
