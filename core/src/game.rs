@@ -1,9 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use crate::player::Missile;
-
 use super::map::Map;
-use super::player::Player;
+use super::player::{Missile, Player};
 
 pub struct Game {
     pub map: Map,
