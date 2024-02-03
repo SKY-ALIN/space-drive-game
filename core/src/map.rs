@@ -83,7 +83,7 @@ mod tests {
     const HEIGHT: f64 = 1500.0;
     const BARRIERS_AMOUNT: u8 = 5;
     const MAX_BARRIER_RADIUS: f64 = 100.0;
-    const SEED: u64 = 12345; // Fixed seed for reproducibility
+    const SEED: u64 = 12345;
 
     fn make_map() -> Map {
         Map::new(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS, SEED)
@@ -99,7 +99,7 @@ mod tests {
     #[test]
     fn test_barriers() {
         let m = make_map();
-        assert!(m.barriers.len() as u8 >= BARRIERS_AMOUNT); // We check that the number of obstacles is not less than the specified one
+        assert_eq!(m.barriers.len() as u8,  BARRIERS_AMOUNT);
         for b in m.barriers {
             assert!(b.x <= WIDTH);
             assert!(b.y <= HEIGHT);
@@ -109,7 +109,8 @@ mod tests {
 
     #[test]
     fn test_generation_with_seed() {
-        // Creating two cards with the same seed
+        // Creating two maps with the same seed
+
         let map1 = Map::new_without_seed(WIDTH, HEIGHT, BARRIERS_AMOUNT, MAX_BARRIER_RADIUS);
         let map2 = Map::new(
             WIDTH,
@@ -119,10 +120,12 @@ mod tests {
             map1.seed,
         );
 
-        // We check that the number of obstacles is the same
+        // We check that the amount of barriers is the same
+
         assert_eq!(map1.barriers.len(), map2.barriers.len());
 
-        // We check that each obstacle is identical in position and size
+        // We check that each barriers is identical by position and radius
+
         for (barrier1, barrier2) in map1.barriers.iter().zip(map2.barriers.iter()) {
             assert_eq!(barrier1.x, barrier2.x);
             assert_eq!(barrier1.y, barrier2.y);

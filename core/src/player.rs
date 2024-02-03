@@ -207,8 +207,8 @@ mod tests {
     use super::{Player, PlayerTrait, ViewHit};
     use std::sync::{Arc, Mutex};
 
-    const X: f64 = 100.0;
-    const Y: f64 = 200.0;
+    const X: f64 = 50.0;
+    const Y: f64 = 50.0;
     const R: f64 = 1.0;
     const DIRECTION: f64 = 0.0;
     const MAX_SPEED: f64 = 0.0;
@@ -257,5 +257,24 @@ mod tests {
         assert_eq!(p.view().first().unwrap(), &ViewHit::Enemy(30.0));
         p.rotate(90.0);
         assert_eq!(p.view().first().unwrap(), &ViewHit::Border(40.0));
+    }
+
+    #[test]
+    fn test_fire() {
+        let map = Map::new_without_seed(100.0, 100.0, 0, 0.0);
+        let mutex_game = Game::create(map);
+        let mutex_player = get_player();
+        mutex_game.register_player(&mutex_player);
+
+        mutex_player.fire();
+
+        let game = mutex_game.lock().unwrap();
+        let missile = game.missiles.first().unwrap();
+        let player = mutex_player.lock().unwrap();
+
+        assert_eq!(missile.player_id, player.id);
+        assert_eq!(missile.direction, player.direction);
+        assert_eq!(missile.x, player.x);
+        assert_eq!(missile.y, player.y);
     }
 }
