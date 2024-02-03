@@ -99,7 +99,7 @@ mod tests {
     #[test]
     fn test_barriers() {
         let m = make_map();
-        assert_eq!(m.barriers.len() as u8,  BARRIERS_AMOUNT);
+        assert_eq!(m.barriers.len() as u8, BARRIERS_AMOUNT);
         for b in m.barriers {
             assert!(b.x <= WIDTH);
             assert!(b.y <= HEIGHT);
