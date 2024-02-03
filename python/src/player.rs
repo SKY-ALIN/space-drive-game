@@ -77,4 +77,8 @@ impl Player {
             })
             .collect()
     }
+
+    pub fn fire(&self) {
+        self.0.fire()
+    }
 }

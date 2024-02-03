@@ -1,11 +1,12 @@
 use std::sync::{Arc, Mutex};
 
 use super::map::Map;
-use super::player::Player;
+use super::player::{Missile, Player};
 
 pub struct Game {
     pub map: Map,
     pub players: Vec<Arc<Mutex<Player>>>,
+    pub missiles: Vec<Missile>,
 }
 
 impl Game {
@@ -13,6 +14,7 @@ impl Game {
         let game = Game {
             map,
             players: Vec::new(),
+            missiles: Vec::new(),
         };
         Arc::new(Mutex::new(game))
     }

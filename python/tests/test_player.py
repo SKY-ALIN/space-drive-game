@@ -30,4 +30,3 @@ def test_view(empty_map: Map, width: int, height: int):
     assert p.view() == [('[BORDER]', 40.0)]
     p.rotate(90)
     assert p.view() == [('[ENEMY]', 30.0)]
-
