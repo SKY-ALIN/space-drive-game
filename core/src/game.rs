@@ -22,7 +22,7 @@ impl Game {
 
 pub trait GameTrait {
     fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>);
-    fn process(self: &Arc<Self>);
+    fn process(self: &Arc<Self>, time: f64);
 }
 
 impl GameTrait for Mutex<Game> {
@@ -32,16 +32,16 @@ impl GameTrait for Mutex<Game> {
         game.players.push(Arc::clone(player));
     }
 
-    fn process(self: &Arc<Self>) {
+    fn process(self: &Arc<Self>, time: f64) {
         let game = self.lock().unwrap();
         for player_arc in game.players.iter() {
             let mut player = player_arc.lock().unwrap();
 
             // Calculate next coordinates
-            let mut next_x =
-                player.x + (player.direction * std::f64::consts::PI / 180.0).sin() * player.speed;
-            let mut next_y =
-                player.y + (player.direction * std::f64::consts::PI / 180.0).cos() * player.speed;
+            let mut next_x = player.x
+                + (player.direction * std::f64::consts::PI / 180.0).sin() * player.speed * time;
+            let mut next_y = player.y
+                + (player.direction * std::f64::consts::PI / 180.0).cos() * player.speed * time;
 
             // Borders collision detection and handling
             if next_x - player.r < 0.0 {
@@ -93,9 +93,9 @@ mod tests {
         game.register_player(&p);
         p.set_speed(0.5);
 
-        game.process();
+        game.process(1.0);
         p.rotate(90.0);
-        game.process();
+        game.process(1.0);
 
         assert_eq!(p.get_x(), 1.5);
         assert_eq!(p.get_y(), 1.5);
@@ -108,9 +108,9 @@ mod tests {
         game.register_player(&p);
         p.set_speed(1.0);
 
-        game.process();
+        game.process(1.0);
         p.rotate(90.0);
-        game.process();
+        game.process(1.0);
 
         assert_eq!((p.get_x() * 100.0).round() / 100.0, 0.5);
         assert_eq!((p.get_y() * 100.0).round() / 100.0, 0.5);
@@ -134,9 +134,9 @@ mod tests {
         game.register_player(&p);
         p.set_speed(1.0);
 
-        game.process();
+        game.process(1.0);
         p.rotate(90.0);
-        game.process();
+        game.process(1.0);
 
         assert_eq!((p.get_x() * 100.0).round() / 100.0, 1.0);
         assert_eq!((p.get_y() * 100.0).round() / 100.0, 1.0);
