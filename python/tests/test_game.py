@@ -7,9 +7,9 @@ def test_movement(empty_map: Map):
     game.register_player(p)
     p.set_speed(0.5)
 
-    game.process()
+    game.process(1.0)
     p.rotate(90)
-    game.process()
+    game.process(1.0)
 
     assert round(p.x, 6) == 1.5
     assert round(p.y, 6) == 1.5
@@ -21,9 +21,9 @@ def test_borders_collision(empty_map: Map):
     game.register_player(p)
     p.set_speed(1)
 
-    game.process()
+    game.process(1.0)
     p.rotate(90)
-    game.process()
+    game.process(1.0)
 
     assert round(p.x, 6) == 0.5
     assert round(p.y, 6) == 0.5

@@ -24,7 +24,7 @@ impl Game {
         self.0.register_player(&player.0);
     }
 
-    fn process(&self) {
-        self.0.process();
+    fn process(&self, time: f64) {
+        self.0.process(time);
     }
 }
