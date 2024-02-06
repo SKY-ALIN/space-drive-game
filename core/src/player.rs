@@ -24,6 +24,7 @@ pub struct Missile {
     pub direction: f64,
     pub id: usize,
     pub player_id: usize,
+    pub speed: f64,
 }
 
 pub struct Player {
@@ -37,6 +38,7 @@ pub struct Player {
     rays_amount: u16,
     game: Weak<Mutex<Game>>,
     pub id: usize,
+    missile_speed: f64,
 }
 
 impl Player {
@@ -47,6 +49,7 @@ impl Player {
         max_speed: f64,
         view_angel: f64,
         rays_amount: u16,
+        missile_speed: f64,
     ) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
@@ -59,6 +62,7 @@ impl Player {
             rays_amount,
             game: Weak::new(),
             id: get_id(),
+            missile_speed,
         };
         Arc::new(Mutex::new(player))
     }
@@ -71,6 +75,7 @@ impl Player {
         view_angel: f64,
         rays_amount: u16,
         direction: f64,
+        missile_speed: f64,
     ) -> Arc<Mutex<Self>> {
         let player = Player {
             x,
@@ -83,6 +88,7 @@ impl Player {
             rays_amount,
             game: Weak::new(),
             id: get_id(),
+            missile_speed,
         };
         Arc::new(Mutex::new(player))
     }
@@ -193,6 +199,7 @@ impl PlayerTrait for Mutex<Player> {
             direction: player.direction,
             id: get_id(),
             player_id: player.id,
+            speed: player.missile_speed,
         })
     }
 }
@@ -214,9 +221,19 @@ mod tests {
     const MAX_SPEED: f64 = 0.0;
     const VIEW_ANGEL: f64 = 60.0;
     const RAYS_AMOUNT: u16 = 7;
+    const MISSILE_SPEED: f64 = 1.0;
 
     fn get_player() -> Arc<Mutex<Player>> {
-        Player::create_with_direction(X, Y, R, MAX_SPEED, VIEW_ANGEL, RAYS_AMOUNT, DIRECTION)
+        Player::create_with_direction(
+            X,
+            Y,
+            R,
+            MAX_SPEED,
+            VIEW_ANGEL,
+            RAYS_AMOUNT,
+            DIRECTION,
+            MISSILE_SPEED,
+        )
     }
 
     #[test]
@@ -246,9 +263,17 @@ mod tests {
             r: 10.0,
         });
         let game = Game::create(map);
-        let p =
-            Player::create_with_direction(50.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGEL, 1, DIRECTION);
-        let p2 = Player::create(100.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGEL, 0);
+        let p = Player::create_with_direction(
+            50.0,
+            50.0,
+            10.0,
+            MAX_SPEED,
+            VIEW_ANGEL,
+            1,
+            DIRECTION,
+            MISSILE_SPEED,
+        );
+        let p2 = Player::create(100.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGEL, 0, MISSILE_SPEED);
         game.register_player(&p);
         game.register_player(&p2);
 
