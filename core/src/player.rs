@@ -67,6 +67,7 @@ impl Player {
         Arc::new(Mutex::new(player))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_with_direction(
         x: f64,
         y: f64,

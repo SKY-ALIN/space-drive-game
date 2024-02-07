@@ -13,6 +13,7 @@ pub struct Player(pub Arc<Mutex<_Player>>);
 
 #[pymethods]
 impl Player {
+    #[allow(clippy::too_many_arguments)]
     #[new]
     #[pyo3(signature = (x, y, r, max_speed = 1.0, view_angel = 60.0, rays_amount = 7, missile_speed = 1.0, direction = None))]
     pub fn new(

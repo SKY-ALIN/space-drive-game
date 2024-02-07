@@ -33,13 +33,13 @@ impl GameTrait for Mutex<Game> {
             .unwrap()
             .missiles
             .iter()
-            .map(|x| Missile {
-                x: x.x,
-                y: x.y,
-                direction: x.direction,
-                id: x.id,
-                player_id: x.id,
-                speed: x.speed,
+            .map(|m| Missile {
+                x: m.x,
+                y: m.y,
+                direction: m.direction,
+                id: m.id,
+                player_id: m.player_id,
+                speed: m.speed,
             })
             .collect()
     }
@@ -73,7 +73,7 @@ impl GameTrait for Mutex<Game> {
 
             // Barriers collision detection
             for barrier in game.map.barriers.iter() {
-                let distance = calc_distance(next_x, next_y, barrier.x, barrier.y);
+                let distance = ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt();
                 if distance < (player.r + barrier.r) {
                     // Don't move player if detect collision
                     next_x = player.x;
@@ -106,7 +106,7 @@ impl GameTrait for Mutex<Game> {
                 .map
                 .barriers
                 .iter()
-                .any(|barrier| calc_distance(next_x, next_y, barrier.x, barrier.y) <= 0.0);
+                .any(|barrier| ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt() <= 0.0);
 
             if has_barrier_collision {
                 continue;
@@ -115,7 +115,7 @@ impl GameTrait for Mutex<Game> {
             let hit_player = game.players.iter().find(|player_arc| {
                 let player = player_arc.lock().unwrap();
 
-                let distance = calc_distance(next_x, next_y, player.x, player.y);
+                let distance = ((next_x - player.x).powi(2) + (next_y - player.y).powi(2)).sqrt();
 
                 player.id != missile.player_id && distance < player.r
             });
@@ -139,10 +139,6 @@ impl GameTrait for Mutex<Game> {
 
         game.missiles = updated_missiles;
     }
-}
-
-fn calc_distance(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
-    ((x1 - x2).powi(2) + (y1 - y2).powi(2)).sqrt()
 }
 
 #[cfg(test)]
