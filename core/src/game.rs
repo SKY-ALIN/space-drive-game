@@ -56,10 +56,12 @@ impl GameTrait for Mutex<Game> {
             let mut player = player_arc.lock().unwrap();
 
             // Calculate next coordinates
+
             let mut next_x = player.x + (player.direction * PI / 180.0).sin() * player.speed * time;
             let mut next_y = player.y + (player.direction * PI / 180.0).cos() * player.speed * time;
 
             // Borders collision detection and handling
+
             if next_x - player.r < 0.0 {
                 next_x = player.r;
             } else if next_x + player.r > game.map.width {
@@ -72,6 +74,7 @@ impl GameTrait for Mutex<Game> {
             }
 
             // Barriers collision detection
+
             for barrier in game.map.barriers.iter() {
                 let distance = ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt();
                 if distance < (player.r + barrier.r) {
@@ -89,55 +92,34 @@ impl GameTrait for Mutex<Game> {
             player.y = next_y;
         }
 
-        let mut updated_missiles: Vec<Missile> = Vec::new();
+        let Game { map, missiles, players } = &mut *game;
 
-        for missile in game.missiles.iter() {
-            let next_x = missile.x + (missile.direction * PI / 180.0).sin() * missile.speed;
-            let next_y = missile.y + (missile.direction * PI / 180.0).cos() * missile.speed;
-
-            let has_border_collision =
-                next_x < 0.0 || next_y < 0.0 || next_x > game.map.width || next_y > game.map.height;
-
-            if has_border_collision {
-                continue;
-            }
-
-            let has_barrier_collision = game
-                .map
-                .barriers
-                .iter()
-                .any(|barrier| ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt() <= 0.0);
-
-            if has_barrier_collision {
-                continue;
-            }
-
-            let hit_player = game.players.iter().find(|player_arc| {
-                let player = player_arc.lock().unwrap();
-
-                let distance = ((next_x - player.x).powi(2) + (next_y - player.y).powi(2)).sqrt();
-
-                player.id != missile.player_id && distance < player.r
-            });
-
-            let has_player_collision = hit_player.is_some();
-
-            if has_player_collision {
-                // TODO handle player collision
-                continue;
-            }
-
-            updated_missiles.push(Missile {
-                x: next_x,
-                y: next_y,
-                direction: missile.direction,
-                id: missile.id,
-                player_id: missile.id,
-                speed: missile.speed,
-            });
+        for missile in missiles.iter_mut() {
+            missile.x += (missile.direction * PI / 180.0).sin() * missile.speed * time;
+            missile.y += (missile.direction * PI / 180.0).cos() * missile.speed * time;
         }
 
-        game.missiles = updated_missiles;
+        // Borders collision
+
+        missiles
+            .retain(|m| m.x >= 0.0 && m.y >= 0.0 && m.x <= map.width && m.y <= map.height);
+
+        // Barriers collision
+
+        missiles.retain(|m| {
+            map.barriers
+                .iter()
+                .all(|b| ((m.x - b.x).powi(2) + (m.y - b.y).powi(2)).sqrt() >= b.r)
+        });
+
+        // Players collision
+
+        missiles.retain(|m| {
+            players
+                .iter()
+                .map(|p| p.lock().unwrap())
+                .all(|p| ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() >= p.r)
+        });
     }
 }
 
@@ -303,22 +285,26 @@ mod tests {
 
     #[test]
     fn test_missiles_barriers_collision() {
-        const START_X: f64 = 0.0;
+        const START_X: f64 = 10.0;
         const START_Y: f64 = 10.0;
 
+        const TARGET_X: f64 = 10.0;
+        const TARGET_Y: f64 = 20.0;
+
         let p =
-            Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+            Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 90.0, 7, 0.0, MISSILE_SPEED);
         let mut map = Map::new(100.0, 100.0, 0, 0.0, SEED);
         map.barriers.push(Barrier {
-            x: 10.0,
-            y: 10.0,
+            x: TARGET_X,
+            y: TARGET_Y,
             r: 1.0,
         });
         let game = Game::create(map);
         game.register_player(&p);
 
-        p.rotate(90.0);
         p.fire();
+
+        assert_eq!(game.get_missiles().len(), 1);
 
         for _ in 0..9 {
             game.process(1.0);
@@ -326,13 +312,12 @@ mod tests {
 
         let missiles = game.get_missiles();
         assert_eq!(missiles.len(), 1);
-        assert_eq!(missiles[0].x, 9.0);
-        assert_eq!(missiles[0].y, START_Y);
+        assert_eq!(missiles[0].x, START_X);
+        assert_eq!(missiles[0].y, START_Y + 9.0);
 
         game.process(1.0);
 
-        let missiles = game.get_missiles();
-        assert_eq!(missiles.len(), 0);
+        assert_eq!(game.get_missiles().len(), 0);
     }
 
     #[test]
