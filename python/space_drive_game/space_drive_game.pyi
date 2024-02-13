@@ -1,5 +1,4 @@
-from typing import Union, Sequence, Literal
-
+from typing import Literal, Sequence, Union
 
 class Map:
     def __new__(cls, width: float, height: float, barriers_amount: int, max_barrier_radius: float, seed: Union[int, None] = None) -> Map: ...

@@ -54,7 +54,11 @@ impl GameTrait for Mutex<Game> {
 
     fn process(self: &Arc<Self>, time: f64) {
         let mut game = self.lock().unwrap();
-        let Game { map, missiles, players } = &mut *game;
+        let Game {
+            map,
+            missiles,
+            players,
+        } = &mut *game;
 
         let mut time_left = time;
 
@@ -75,8 +79,10 @@ impl GameTrait for Mutex<Game> {
 
                 // Calculate next coordinates
 
-                let mut next_x = player.x + (player.direction * PI / 180.0).sin() * player.speed * timedelta;
-                let mut next_y = player.y + (player.direction * PI / 180.0).cos() * player.speed * timedelta;
+                let mut next_x =
+                    player.x + (player.direction * PI / 180.0).sin() * player.speed * timedelta;
+                let mut next_y =
+                    player.y + (player.direction * PI / 180.0).cos() * player.speed * timedelta;
 
                 // Borders collision detection and handling
 
@@ -94,7 +100,8 @@ impl GameTrait for Mutex<Game> {
                 // Barriers collision detection
 
                 for barrier in map.barriers.iter() {
-                    let distance = ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt();
+                    let distance =
+                        ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt();
                     if distance < (player.r + barrier.r) {
                         // Don't move player if detect collision
                         next_x = player.x;
@@ -117,8 +124,7 @@ impl GameTrait for Mutex<Game> {
 
             // Borders collision
 
-            missiles
-                .retain(|m| m.x >= 0.0 && m.y >= 0.0 && m.x <= map.width && m.y <= map.height);
+            missiles.retain(|m| m.x >= 0.0 && m.y >= 0.0 && m.x <= map.width && m.y <= map.height);
 
             // Barriers collision
 

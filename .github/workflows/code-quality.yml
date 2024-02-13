@@ -34,3 +34,39 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+  flake8:
+    name: Flake8 check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Run flake8
+        run: flake8
+
+  pylint:
+    name: Pylint check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pylint
+        run: pip install pylint
+
+      - name: Run pylint
+        run: find . -iname "*.py" -path "./python/*" | xargs pylint
+
+  isort:
+    name: Isort check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install isort
+        run: pip install isort
+
+      - name: Run isort
+        run: isort . --check-only
