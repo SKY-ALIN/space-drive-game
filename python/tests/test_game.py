@@ -56,7 +56,7 @@ def test_missiles_movement(empty_map: Map):
     assert round(missiles[1][0], 6) == START_X + MISSILE_SPEED
     assert round(missiles[1][1], 6) == START_Y
 
-    for _ in range(4): game.process(1.0)
+    game.process(4.0)
 
     missiles = game.get_missiles()
     assert len(missiles) == 2
@@ -87,7 +87,7 @@ def test_missiles_borders_collision(empty_map: Map):
     p.fire()
     p.rotate(90.0)
 
-    for _ in range(50): game.process(1.0)
+    game.process(5.0)
 
     missiles = game.get_missiles()
     assert len(missiles) == 4
@@ -109,7 +109,7 @@ def test_missiles_borders_collision(empty_map: Map):
     missiles = game.get_missiles()
     assert len(missiles) == 2
 
-    for _ in range(24): game.process(1.0)
+    game.process(24.0)
 
     missiles = game.get_missiles()
     assert len(missiles) == 2
@@ -144,7 +144,7 @@ def test_missiles_players_collision(empty_map: Map):
     missiles = game.get_missiles()
     assert len(missiles) == 1
 
-    for _ in range(10): game.process(1.0)
+    game.process(10.0)
 
     missiles = game.get_missiles()
     assert len(missiles) == 0

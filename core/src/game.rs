@@ -4,6 +4,8 @@ use std::sync::{Arc, Mutex};
 use super::map::Map;
 use super::player::{Missile, Player};
 
+const TIME_STEP: f64 = 0.1;
+
 pub struct Game {
     pub map: Map,
     pub players: Vec<Arc<Mutex<Player>>>,
@@ -52,74 +54,89 @@ impl GameTrait for Mutex<Game> {
 
     fn process(self: &Arc<Self>, time: f64) {
         let mut game = self.lock().unwrap();
-        for player_arc in game.players.iter() {
-            let mut player = player_arc.lock().unwrap();
-
-            // Calculate next coordinates
-
-            let mut next_x = player.x + (player.direction * PI / 180.0).sin() * player.speed * time;
-            let mut next_y = player.y + (player.direction * PI / 180.0).cos() * player.speed * time;
-
-            // Borders collision detection and handling
-
-            if next_x - player.r < 0.0 {
-                next_x = player.r;
-            } else if next_x + player.r > game.map.width {
-                next_x = game.map.width - player.r;
-            }
-            if next_y - player.r < 0.0 {
-                next_y = player.r;
-            } else if next_y + player.r > game.map.height {
-                next_y = game.map.height - player.r;
-            }
-
-            // Barriers collision detection
-
-            for barrier in game.map.barriers.iter() {
-                let distance = ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt();
-                if distance < (player.r + barrier.r) {
-                    // Don't move player if detect collision
-                    next_x = player.x;
-                    next_y = player.y;
-                    break;
-                }
-            }
-
-            // Players collision detection
-            // todo
-
-            player.x = next_x;
-            player.y = next_y;
-        }
-
         let Game { map, missiles, players } = &mut *game;
 
-        for missile in missiles.iter_mut() {
-            missile.x += (missile.direction * PI / 180.0).sin() * missile.speed * time;
-            missile.y += (missile.direction * PI / 180.0).cos() * missile.speed * time;
+        let mut time_left = time;
+
+        loop {
+            let mut timedelta = TIME_STEP;
+            if time_left > TIME_STEP {
+                time_left -= TIME_STEP;
+            } else if time_left <= TIME_STEP && time_left > 0.0 {
+                timedelta = TIME_STEP;
+                time_left -= TIME_STEP;
+            } else {
+                break;
+            }
+            time_left = (time_left * 10000.0).round() / 10000.0;
+
+            for player_arc in players.iter() {
+                let mut player = player_arc.lock().unwrap();
+
+                // Calculate next coordinates
+
+                let mut next_x = player.x + (player.direction * PI / 180.0).sin() * player.speed * timedelta;
+                let mut next_y = player.y + (player.direction * PI / 180.0).cos() * player.speed * timedelta;
+
+                // Borders collision detection and handling
+
+                if next_x - player.r < 0.0 {
+                    next_x = player.r;
+                } else if next_x + player.r > map.width {
+                    next_x = map.width - player.r;
+                }
+                if next_y - player.r < 0.0 {
+                    next_y = player.r;
+                } else if next_y + player.r > map.height {
+                    next_y = map.height - player.r;
+                }
+
+                // Barriers collision detection
+
+                for barrier in map.barriers.iter() {
+                    let distance = ((next_x - barrier.x).powi(2) + (next_y - barrier.y).powi(2)).sqrt();
+                    if distance < (player.r + barrier.r) {
+                        // Don't move player if detect collision
+                        next_x = player.x;
+                        next_y = player.y;
+                        break;
+                    }
+                }
+
+                // Players collision detection
+                // todo
+
+                player.x = next_x;
+                player.y = next_y;
+            }
+
+            for missile in missiles.iter_mut() {
+                missile.x += (missile.direction * PI / 180.0).sin() * missile.speed * timedelta;
+                missile.y += (missile.direction * PI / 180.0).cos() * missile.speed * timedelta;
+            }
+
+            // Borders collision
+
+            missiles
+                .retain(|m| m.x >= 0.0 && m.y >= 0.0 && m.x <= map.width && m.y <= map.height);
+
+            // Barriers collision
+
+            missiles.retain(|m| {
+                map.barriers
+                    .iter()
+                    .all(|b| ((m.x - b.x).powi(2) + (m.y - b.y).powi(2)).sqrt() >= b.r)
+            });
+
+            // Players collision
+
+            missiles.retain(|m| {
+                players
+                    .iter()
+                    .map(|p| p.lock().unwrap())
+                    .all(|p| ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() >= p.r)
+            });
         }
-
-        // Borders collision
-
-        missiles
-            .retain(|m| m.x >= 0.0 && m.y >= 0.0 && m.x <= map.width && m.y <= map.height);
-
-        // Barriers collision
-
-        missiles.retain(|m| {
-            map.barriers
-                .iter()
-                .all(|b| ((m.x - b.x).powi(2) + (m.y - b.y).powi(2)).sqrt() >= b.r)
-        });
-
-        // Players collision
-
-        missiles.retain(|m| {
-            players
-                .iter()
-                .map(|p| p.lock().unwrap())
-                .all(|p| ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() >= p.r)
-        });
     }
 }
 
@@ -146,8 +163,8 @@ mod tests {
         p.rotate(90.0);
         game.process(1.0);
 
-        assert_eq!(p.get_x(), 1.5);
-        assert_eq!(p.get_y(), 1.5);
+        assert_eq!((p.get_x() * 100.0).round() / 100.0, 1.5);
+        assert_eq!((p.get_y() * 100.0).round() / 100.0, 1.5);
     }
 
     #[test]
@@ -222,9 +239,7 @@ mod tests {
         assert_eq!(missiles[1].x, START_X + MISSILE_SPEED);
         assert_eq!(missiles[1].y, START_Y);
 
-        for _ in 0..4 {
-            game.process(1.0);
-        }
+        game.process(4.0);
 
         let missiles = game.get_missiles();
 
@@ -258,9 +273,7 @@ mod tests {
         p.fire();
         p.rotate(90.0);
 
-        for _ in 0..50 {
-            game.process(1.0);
-        }
+        game.process(50.0);
 
         let missiles = game.get_missiles();
         assert_eq!(missiles.len(), 4);
@@ -350,9 +363,8 @@ mod tests {
         let missiles = game.get_missiles();
         assert_eq!(missiles.len(), 1);
 
-        for _ in 0..10 {
-            game.process(1.0);
-        }
+        game.process(10.0);
+
         let missiles = game.get_missiles();
         assert_eq!(missiles.len(), 0);
 
