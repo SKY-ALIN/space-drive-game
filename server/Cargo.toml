@@ -8,3 +8,6 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+
+[dependencies.space_drive_game_core]
+path = "../core"
