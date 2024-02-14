@@ -1,10 +1,13 @@
+use log::{error, info};
+use std::env;
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
 use space_drive_game_core::{Game, GameTrait, Map, Player};
 
-struct Config {
+struct Config<'a> {
+    host: &'a str,
     map_widht: f64,
     map_height: f64,
     map_barriers_amount: u8,
@@ -16,9 +19,10 @@ struct Config {
     player_rays_amount: u16,
 }
 
-impl Default for Config {
+impl<'a> Default for Config<'a> {
     fn default() -> Self {
         Self {
+            host: "127.0.0.1:3333",
             map_widht: 1500.0,
             map_height: 1000.0,
             map_barriers_amount: 50,
@@ -33,7 +37,8 @@ impl Default for Config {
 }
 
 fn handle_stream(stream: TcpStream, game: Arc<Mutex<Game>>, config: Arc<Config>) {
-    println!("Start processing {}", stream.peer_addr().unwrap());
+    let target = "player_name";
+    info!(target: target, "Start processing {}", stream.peer_addr().unwrap());
 
     let unwraped_game = game.lock().unwrap();
     let coordinates = unwraped_game.map.get_free_point(config.player_radius);
@@ -50,14 +55,19 @@ fn handle_stream(stream: TcpStream, game: Arc<Mutex<Game>>, config: Arc<Config>)
     game.register_player(&player);
 
     stream.shutdown(Shutdown::Both).unwrap();
-    println!("Finish processing {}", stream.peer_addr().unwrap());
+    info!(target: target, "Finish processing {}", stream.peer_addr().unwrap());
 }
 
 fn main() {
-    let listener = TcpListener::bind("0.0.0.0:3333").unwrap();
-    println!("Server listening on port 3333");
+    if env::var("RUST_LOG").is_err() {
+        env::set_var("RUST_LOG", "info")
+    }
+    env_logger::init();
 
     let config = Arc::new(Config::default());
+    let listener = TcpListener::bind(config.host).unwrap();
+    info!("Server is running on {}", config.host);
+
     let map = match config.map_seed {
         Some(seed) => Map::new(
             config.map_widht,
@@ -78,13 +88,13 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                println!("New connection: {}", stream.peer_addr().unwrap());
+                info!("New connection: {}", stream.peer_addr().unwrap());
                 let cloned_game_ref = Arc::clone(&game);
                 let cloned_config_ref = Arc::clone(&config);
                 thread::spawn(move || handle_stream(stream, cloned_game_ref, cloned_config_ref));
             }
             Err(e) => {
-                println!("Error: {}", e);
+                error!("Client connection error: {e}");
             }
         }
     }
