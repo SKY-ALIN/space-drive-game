@@ -26,7 +26,9 @@ impl Game {
 
     fn get_missiles(&self) -> Vec<(f64, f64, f64)> {
         self.0
-            .get_missiles()
+            .lock()
+            .unwrap()
+            .missiles
             .iter()
             .map(|m| (m.x, m.y, m.speed))
             .collect()

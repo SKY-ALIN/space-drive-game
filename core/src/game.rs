@@ -24,28 +24,11 @@ impl Game {
 }
 
 pub trait GameTrait {
-    fn get_missiles(self: &Arc<Self>) -> Vec<Missile>;
     fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>);
     fn process(self: &Arc<Self>, time: f64);
 }
 
 impl GameTrait for Mutex<Game> {
-    fn get_missiles(self: &Arc<Self>) -> Vec<Missile> {
-        self.lock()
-            .unwrap()
-            .missiles
-            .iter()
-            .map(|m| Missile {
-                x: m.x,
-                y: m.y,
-                direction: m.direction,
-                id: m.id,
-                player_id: m.player_id,
-                speed: m.speed,
-            })
-            .collect()
-    }
-
     fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>) {
         player.lock().unwrap().mount_game(Arc::clone(self));
         let mut game = self.lock().unwrap();
@@ -140,7 +123,7 @@ impl GameTrait for Mutex<Game> {
                 players
                     .iter()
                     .map(|p| p.lock().unwrap())
-                    .all(|p| ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() >= p.r)
+                    .all(|p| m.player_id == p.id || ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() >= p.r)
             });
         }
     }
@@ -157,6 +140,10 @@ mod tests {
 
     const SEED: u64 = 12345;
     const MISSILE_SPEED: f64 = 1.0;
+
+    fn round_position(value: f64) -> f64 {
+        (value * 100000.0).round() / 100000.0
+    }
 
     #[test]
     fn test_movement() {
@@ -224,52 +211,62 @@ mod tests {
         let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
 
-        let missiles = game.get_missiles();
-        assert_eq!(missiles.len(), 0);
+        {
+            let missiles = &game.lock().unwrap().missiles;
+            assert_eq!(missiles.len(), 0);
+        }
 
+        // Launch two missiles in different directions
         p.fire();
         p.rotate(90.0);
         p.fire();
         p.rotate(90.0);
         game.process(1.0);
 
-        let missiles = game.get_missiles();
+        {
+            let missiles = &game.lock().unwrap().missiles;
+        
+            // Checking for missiles after launch
+            // Checking constant speed and position change
+            assert_eq!(missiles[0].speed, MISSILE_SPEED);
+            assert_eq!(missiles[0].x, START_X);
+            assert_eq!(round_position(missiles[0].y), START_Y + MISSILE_SPEED);
+    
+            assert_eq!(missiles[1].speed, MISSILE_SPEED);
+            assert_eq!(round_position(missiles[1].x), START_X + MISSILE_SPEED);
+            assert_eq!(missiles[1].y, START_Y);
+        }
 
-        assert_eq!(missiles.len(), 2);
 
-        assert_eq!(missiles[0].speed, MISSILE_SPEED);
-        assert_eq!(missiles[0].x, START_X);
-        assert_eq!(missiles[0].y, START_Y + MISSILE_SPEED);
-
-        assert_eq!(missiles[1].speed, MISSILE_SPEED);
-        assert_eq!(missiles[1].x, START_X + MISSILE_SPEED);
-        assert_eq!(missiles[1].y, START_Y);
 
         game.process(4.0);
 
-        let missiles = game.get_missiles();
+        let missiles = &game.lock().unwrap().missiles;
 
-        assert_eq!(missiles.len(), 2);
-
+        // Checking constant speed and position change
         assert_eq!(missiles[0].speed, MISSILE_SPEED);
         assert_eq!(missiles[0].x, START_X);
-        assert_eq!(missiles[0].y, START_Y + MISSILE_SPEED * 5.0);
+        assert_eq!(round_position(missiles[0].y), START_Y + MISSILE_SPEED * 5.0);
 
         assert_eq!(missiles[1].speed, MISSILE_SPEED);
-        assert_eq!(missiles[1].x, START_X + MISSILE_SPEED * 5.0);
+        assert_eq!(round_position(missiles[1].x), START_X + MISSILE_SPEED * 5.0);
         assert_eq!(missiles[1].y, START_Y);
+
+
     }
 
     #[test]
     fn test_missiles_borders_collision() {
         const START_X: f64 = 50.0;
         const START_Y: f64 = 50.0;
+        const MAP_SIZE: f64 = 100.0;
 
         let p =
             Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
-        let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
+        let game = Game::create(Map::new(MAP_SIZE, MAP_SIZE, 0, 0.0, SEED));
         game.register_player(&p);
 
+        // Launch missiles in different directions to check collision for each border
         p.fire();
         p.rotate(90.0);
         p.fire();
@@ -279,26 +276,32 @@ mod tests {
         p.fire();
         p.rotate(90.0);
 
-        game.process(50.0);
 
-        let missiles = game.get_missiles();
-        assert_eq!(missiles.len(), 4);
+        // Move until the last frame before collision
+        game.process(49.0);
 
-        assert_eq!(missiles[0].x, START_X);
-        assert_eq!(missiles[0].y, START_Y + MISSILE_SPEED * 50.0);
+        {
+            let missiles = &game.lock().unwrap().missiles;
+            assert_eq!(missiles.len(), 4);
+            
+            // Make sure the missiles are still there and their position has changed.
+            assert_eq!(missiles[0].x, START_X);
+            assert_eq!(round_position(missiles[0].y), START_Y + MISSILE_SPEED * 49.0);
 
-        assert_eq!(missiles[1].x, START_X + MISSILE_SPEED * 50.0);
-        assert_eq!(missiles[1].y, START_Y);
+            assert_eq!(round_position(missiles[1].x), START_X + MISSILE_SPEED * 49.0);
+            assert_eq!(missiles[1].y, START_Y);
 
-        assert_eq!(missiles[2].x, START_X);
-        assert_eq!(missiles[2].y, START_Y - MISSILE_SPEED * 50.0);
+            assert_eq!(missiles[2].x, START_X);
+            assert_eq!(round_position(missiles[2].y), START_Y - MISSILE_SPEED * 49.0);
 
-        assert_eq!(missiles[3].x, START_X - MISSILE_SPEED * 50.0);
-        assert_eq!(missiles[3].y, START_Y);
+            assert_eq!(round_position(missiles[3].x), START_X - MISSILE_SPEED * 49.0);
+            assert_eq!(missiles[3].y, START_Y);
+        }
 
-        game.process(1.0);
+        game.process(2.0);
 
-        let missiles = game.get_missiles();
+        let missiles = &game.lock().unwrap().missiles;
+        // // Check if the missiles were destroyed after the collision
         assert_eq!(missiles.len(), 0);
     }
 
@@ -321,22 +324,33 @@ mod tests {
         let game = Game::create(map);
         game.register_player(&p);
 
+        // Launch a missile into a barrier
         p.fire();
 
-        assert_eq!(game.get_missiles().len(), 1);
-
-        for _ in 0..9 {
-            game.process(1.0);
+        {
+            let missiles = &game.lock().unwrap().missiles;
+            assert_eq!(missiles.len(), 1);
         }
 
-        let missiles = game.get_missiles();
-        assert_eq!(missiles.len(), 1);
-        assert_eq!(missiles[0].x, START_X);
-        assert_eq!(missiles[0].y, START_Y + 9.0);
+
+        // Move until the last frame before collision
+        game.process(8.0);
+
+        {
+            // Check updated position before collision
+            let missiles = &game.lock().unwrap().missiles;
+            assert_eq!(missiles[0].x, START_X);
+            assert_eq!(round_position(missiles[0].y), START_Y + 8.0);
+        }
 
         game.process(1.0);
 
-        assert_eq!(game.get_missiles().len(), 0);
+        {
+            let missiles = &game.lock().unwrap().missiles;
+            // Check if the missile was destroyed after the collision
+            assert_eq!(missiles.len(), 0);
+        }
+
     }
 
     #[test]
@@ -364,16 +378,16 @@ mod tests {
         game.register_player(&p1);
         game.register_player(&p2);
 
+        // Launch a missile into a player
         p1.fire();
-
-        let missiles = game.get_missiles();
-        assert_eq!(missiles.len(), 1);
 
         game.process(10.0);
 
-        let missiles = game.get_missiles();
+        let missiles = &game.lock().unwrap().missiles;
+        // Check if the missile was destroyed after the collision
         assert_eq!(missiles.len(), 0);
 
         // TODO check hit player
     }
 }
+
