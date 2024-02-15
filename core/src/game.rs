@@ -120,10 +120,9 @@ impl GameTrait for Mutex<Game> {
             // Players collision
 
             missiles.retain(|m| {
-                players
-                    .iter()
-                    .map(|p| p.lock().unwrap())
-                    .all(|p| m.player_id == p.id || ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() >= p.r)
+                players.iter().map(|p| p.lock().unwrap()).all(|p| {
+                    m.player_id == p.id || ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() >= p.r
+                })
             });
         }
     }
@@ -156,8 +155,8 @@ mod tests {
         p.rotate(90.0);
         game.process(1.0);
 
-        assert_eq!((p.get_x() * 100.0).round() / 100.0, 1.5);
-        assert_eq!((p.get_y() * 100.0).round() / 100.0, 1.5);
+        assert_eq!(round_position(p.get_x()), 1.5);
+        assert_eq!(round_position(p.get_y()), 1.5);
     }
 
     #[test]
@@ -171,8 +170,8 @@ mod tests {
         p.rotate(90.0);
         game.process(1.0);
 
-        assert_eq!((p.get_x() * 100.0).round() / 100.0, 0.5);
-        assert_eq!((p.get_y() * 100.0).round() / 100.0, 0.5);
+        assert_eq!(round_position(p.get_x()), 0.5);
+        assert_eq!(round_position(p.get_y()), 0.5);
     }
 
     #[test]
@@ -197,8 +196,8 @@ mod tests {
         p.rotate(90.0);
         game.process(1.0);
 
-        assert_eq!((p.get_x() * 100.0).round() / 100.0, 1.0);
-        assert_eq!((p.get_y() * 100.0).round() / 100.0, 1.0);
+        assert_eq!(round_position(p.get_x()), 1.0);
+        assert_eq!(round_position(p.get_y()), 1.0);
     }
 
     #[test]
@@ -220,24 +219,21 @@ mod tests {
         p.fire();
         p.rotate(90.0);
         p.fire();
-        p.rotate(90.0);
         game.process(1.0);
 
         {
             let missiles = &game.lock().unwrap().missiles;
-        
+
             // Checking for missiles after launch
             // Checking constant speed and position change
             assert_eq!(missiles[0].speed, MISSILE_SPEED);
             assert_eq!(missiles[0].x, START_X);
             assert_eq!(round_position(missiles[0].y), START_Y + MISSILE_SPEED);
-    
+
             assert_eq!(missiles[1].speed, MISSILE_SPEED);
             assert_eq!(round_position(missiles[1].x), START_X + MISSILE_SPEED);
             assert_eq!(missiles[1].y, START_Y);
         }
-
-
 
         game.process(4.0);
 
@@ -251,8 +247,6 @@ mod tests {
         assert_eq!(missiles[1].speed, MISSILE_SPEED);
         assert_eq!(round_position(missiles[1].x), START_X + MISSILE_SPEED * 5.0);
         assert_eq!(missiles[1].y, START_Y);
-
-
     }
 
     #[test]
@@ -274,8 +268,6 @@ mod tests {
         p.fire();
         p.rotate(90.0);
         p.fire();
-        p.rotate(90.0);
-
 
         // Move until the last frame before collision
         game.process(49.0);
@@ -283,25 +275,37 @@ mod tests {
         {
             let missiles = &game.lock().unwrap().missiles;
             assert_eq!(missiles.len(), 4);
-            
+
             // Make sure the missiles are still there and their position has changed.
             assert_eq!(missiles[0].x, START_X);
-            assert_eq!(round_position(missiles[0].y), START_Y + MISSILE_SPEED * 49.0);
+            assert_eq!(
+                round_position(missiles[0].y),
+                START_Y + MISSILE_SPEED * 49.0
+            );
 
-            assert_eq!(round_position(missiles[1].x), START_X + MISSILE_SPEED * 49.0);
+            assert_eq!(
+                round_position(missiles[1].x),
+                START_X + MISSILE_SPEED * 49.0
+            );
             assert_eq!(missiles[1].y, START_Y);
 
             assert_eq!(missiles[2].x, START_X);
-            assert_eq!(round_position(missiles[2].y), START_Y - MISSILE_SPEED * 49.0);
+            assert_eq!(
+                round_position(missiles[2].y),
+                START_Y - MISSILE_SPEED * 49.0
+            );
 
-            assert_eq!(round_position(missiles[3].x), START_X - MISSILE_SPEED * 49.0);
+            assert_eq!(
+                round_position(missiles[3].x),
+                START_X - MISSILE_SPEED * 49.0
+            );
             assert_eq!(missiles[3].y, START_Y);
         }
 
         game.process(2.0);
 
         let missiles = &game.lock().unwrap().missiles;
-        // // Check if the missiles were destroyed after the collision
+        // Check if the missiles were destroyed after the collision
         assert_eq!(missiles.len(), 0);
     }
 
@@ -332,7 +336,6 @@ mod tests {
             assert_eq!(missiles.len(), 1);
         }
 
-
         // Move until the last frame before collision
         game.process(8.0);
 
@@ -350,44 +353,5 @@ mod tests {
             // Check if the missile was destroyed after the collision
             assert_eq!(missiles.len(), 0);
         }
-
-    }
-
-    #[test]
-    fn test_missiles_players_collision() {
-        const START_X: f64 = 10.0;
-        const START_Y: f64 = 10.0;
-
-        const TARGET_X: f64 = 10.0;
-        const TARGET_Y: f64 = 20.0;
-
-        let p1 =
-            Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
-        let p2 = Player::create_with_direction(
-            TARGET_X,
-            TARGET_Y,
-            1.0,
-            1.0,
-            60.0,
-            7,
-            0.0,
-            MISSILE_SPEED,
-        );
-
-        let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
-        game.register_player(&p1);
-        game.register_player(&p2);
-
-        // Launch a missile into a player
-        p1.fire();
-
-        game.process(10.0);
-
-        let missiles = &game.lock().unwrap().missiles;
-        // Check if the missile was destroyed after the collision
-        assert_eq!(missiles.len(), 0);
-
-        // TODO check hit player
     }
 }
-

@@ -24,13 +24,13 @@ impl Game {
         self.0.register_player(&player.0);
     }
 
-    fn get_missiles(&self) -> Vec<(f64, f64, f64)> {
+    fn get_missiles(&self) -> Vec<(f64, f64)> {
         self.0
             .lock()
             .unwrap()
             .missiles
             .iter()
-            .map(|m| (m.x, m.y, m.speed))
+            .map(|m| (m.x, m.y))
             .collect()
     }
 
