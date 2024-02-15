@@ -13,8 +13,9 @@ pub struct Player(pub Arc<Mutex<_Player>>);
 
 #[pymethods]
 impl Player {
+    #[allow(clippy::too_many_arguments)]
     #[new]
-    #[pyo3(signature = (x, y, r, max_speed = 1.0, view_angel = 60.0, rays_amount = 7, direction = None))]
+    #[pyo3(signature = (x, y, r, max_speed = 1.0, view_angel = 60.0, rays_amount = 7, missile_speed = 1.0, direction = None))]
     pub fn new(
         x: f64,
         y: f64,
@@ -22,6 +23,7 @@ impl Player {
         max_speed: f64,
         view_angel: f64,
         rays_amount: u16,
+        missile_speed: f64,
         direction: Option<f64>,
     ) -> Self {
         match direction {
@@ -33,8 +35,17 @@ impl Player {
                 view_angel,
                 rays_amount,
                 d,
+                missile_speed,
             )),
-            None => Player(_Player::create(x, y, r, max_speed, view_angel, rays_amount)),
+            None => Player(_Player::create(
+                x,
+                y,
+                r,
+                max_speed,
+                view_angel,
+                rays_amount,
+                missile_speed,
+            )),
         }
     }
 

@@ -30,5 +30,9 @@ run:
 lint:
 	cargo clippy --all-targets --all-features
 	cargo fmt --all --check
+	flake8
+	find . -iname "*.py" -path "./python/*" | xargs pylint
+	isort . --check-only
 fix:
 	cargo fmt --all
+	isort .
