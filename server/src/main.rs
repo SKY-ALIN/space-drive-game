@@ -72,3 +72,4 @@ fn main() -> Result<(), Error> {
 
     info!("Server is shouting down");
     Ok(())
+}
