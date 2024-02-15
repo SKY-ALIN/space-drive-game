@@ -1,4 +1,3 @@
-use envy;
 use log::{error, info};
 use std::env;
 use std::io;
@@ -27,7 +26,7 @@ fn main() -> Result<(), Error> {
     env_logger::init();
 
     let config = Arc::new(Config::new()?);
-    let listener = match TcpListener::bind(&config.host) {
+    let listener = match TcpListener::bind(config.host) {
         Ok(l) => l,
         Err(e) => {
             error!("{e}");
