@@ -1,4 +1,4 @@
-from space_drive_game import Player, Map, Game
+from space_drive_game import Game, Map, Player
 
 
 def test_attrs():

@@ -1,3 +1,5 @@
+# pylint: disable=redefined-outer-name
+
 from pytest import fixture
 
 from space_drive_game import Map
