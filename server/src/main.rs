@@ -1,5 +1,7 @@
+use envy;
 use log::{error, info};
 use std::env;
+use std::io;
 use std::net::TcpListener;
 use std::sync::Arc;
 use std::thread;
@@ -12,14 +14,26 @@ mod handler;
 use config::Config;
 use handler::handle_stream;
 
-fn main() {
+#[derive(Debug)]
+pub enum Error {
+    EnvError(envy::Error),
+    TCPListenerError(io::Error),
+}
+
+fn main() -> Result<(), Error> {
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "debug")
     }
     env_logger::init();
 
-    let config = Arc::new(Config::default());
-    let listener = TcpListener::bind(config.host).unwrap();
+    let config = Arc::new(Config::new()?);
+    let listener = match TcpListener::bind(&config.host) {
+        Ok(l) => l,
+        Err(e) => {
+            error!("{e}");
+            return Err(Error::TCPListenerError(e));
+        }
+    };
     info!("Server is running on {}", config.host);
 
     let map = match config.map_seed {
@@ -42,14 +56,21 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                info!("New connection: {}", stream.peer_addr().unwrap());
                 let cloned_game_ref = Arc::clone(&game);
                 let cloned_config_ref = Arc::clone(&config);
-                thread::spawn(move || handle_stream(stream, cloned_game_ref, cloned_config_ref));
+                thread::spawn(move || {
+                    let ip = stream.peer_addr().unwrap();
+                    info!("Open connection {}", ip);
+                    let _ = handle_stream(stream, cloned_game_ref, cloned_config_ref);
+                    info!("Close connection {}", ip);
+                });
             }
             Err(e) => {
                 error!("Client connection error: {e}");
             }
         }
     }
+
+    info!("Server is shouting down");
+    Ok(())
 }

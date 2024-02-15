@@ -16,6 +16,7 @@ struct PlayerName {
 struct Connection(TcpStream);
 
 impl Connection {
+    #[allow(dead_code)]
     fn send<T: Serialize>(&mut self, data: T) {
         debug!("{:?}", serde_json::to_string(&data).unwrap());
         let _ = self
