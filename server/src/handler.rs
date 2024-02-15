@@ -58,6 +58,7 @@ pub fn handle_stream(
         config.player_max_speed,
         config.player_view_angel,
         config.player_rays_amount,
+        config.player_missile_speed,
     );
     game.register_player(&player);
 

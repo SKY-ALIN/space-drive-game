@@ -12,6 +12,7 @@ const DEFAULT_PLAYER_RADIUS: f64 = 5.0;
 const DEFAULT_PLAYER_MAX_SPEED: f64 = 2.0;
 const DEFAULT_PLAYER_VIEW_ANGEL: f64 = 30.0;
 const DEFAULT_PLAYER_RAYS_AMOUNT: u16 = 13;
+const DEFAULT_PLAYER_MISSILE_SPEED: f64 = 5.0;
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -35,6 +36,8 @@ pub struct Config {
     pub player_view_angel: f64,
     #[serde(default = "default_player_rays_amount")]
     pub player_rays_amount: u16,
+    #[serde(default = "default_player_missile_speed")]
+    pub player_missile_speed: f64,
 }
 
 fn default_host() -> SocketAddr {
@@ -75,6 +78,10 @@ fn default_player_view_angel() -> f64 {
 
 fn default_player_rays_amount() -> u16 {
     DEFAULT_PLAYER_RAYS_AMOUNT
+}
+
+fn default_player_missile_speed() -> f64 {
+    DEFAULT_PLAYER_MISSILE_SPEED
 }
 
 impl Config {
