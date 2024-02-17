@@ -4,13 +4,24 @@ use std::io::Write;
 use std::net::{Shutdown, TcpStream};
 use std::sync::{Arc, Mutex};
 
-use space_drive_game_core::{Game, GameTrait, Player};
+use space_drive_game_core::{Game, GameTrait, Player, PlayerTrait, ViewHit as _ViewHit};
 
 use crate::Config;
 
 #[derive(Deserialize)]
 struct PlayerName {
     name: String,
+}
+
+#[derive(Serialize)]
+struct ViewHit {
+    object: String,
+    distance: f64,
+}
+
+#[derive(Serialize)]
+struct View {
+    view: Vec<ViewHit>,
 }
 
 struct Connection(TcpStream);
@@ -31,6 +42,28 @@ impl Connection {
 
     fn close(&self) {
         self.0.shutdown(Shutdown::Both).unwrap();
+    }
+}
+
+fn make_rasponse_from_view(view: Vec<_ViewHit>) -> View {
+    View {
+        view: view
+            .into_iter()
+            .map(|v| match v {
+                _ViewHit::Barrier(d) => ViewHit {
+                    object: "BARRIER".to_string(),
+                    distance: d,
+                },
+                _ViewHit::Border(d) => ViewHit {
+                    object: "BORDER".to_string(),
+                    distance: d,
+                },
+                _ViewHit::Enemy(d) => ViewHit {
+                    object: "ENEMY".to_string(),
+                    distance: d,
+                },
+            })
+            .collect(),
     }
 }
 
@@ -61,6 +94,8 @@ pub fn handle_stream(
         config.player_missile_speed,
     );
     game.register_player(&player);
+
+    conn.send(make_rasponse_from_view(player.view()));
 
     conn.close();
     info!(target: target, "Finish processing");
