@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
 
+use crate::player::PlayerStatus;
+
 use super::game::Game;
 
 const DISTANCE_LIMIT: f64 = 0.01;
@@ -57,7 +59,7 @@ pub fn ray_marching(
 
         for player in game.players.iter() {
             let player = player.lock().unwrap();
-            if player.id == player_id {
+            if player.id == player_id || player.status != PlayerStatus::InGame {
                 continue;
             }
 

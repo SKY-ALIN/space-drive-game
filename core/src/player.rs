@@ -12,6 +12,13 @@ fn get_id() -> usize {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum PlayerStatus {
+    Win,
+    InGame,
+    KilledBy(usize),
+}
+
+#[derive(Debug, PartialEq)]
 pub enum ViewHit {
     Barrier(f64),
     Border(f64),
@@ -39,6 +46,7 @@ pub struct Player {
     game: Weak<Mutex<Game>>,
     pub id: usize,
     missile_speed: f64,
+    pub status: PlayerStatus,
 }
 
 impl Player {
@@ -63,6 +71,7 @@ impl Player {
             game: Weak::new(),
             id: get_id(),
             missile_speed,
+            status: PlayerStatus::InGame,
         };
         Arc::new(Mutex::new(player))
     }
@@ -90,6 +99,7 @@ impl Player {
             game: Weak::new(),
             id: get_id(),
             missile_speed,
+            status: PlayerStatus::InGame,
         };
         Arc::new(Mutex::new(player))
     }

@@ -3,9 +3,10 @@ use std::sync::{Arc, Mutex};
 
 #[rustfmt::skip]
 use space_drive_game_core::player::{
-    Player      as _Player,
-    PlayerTrait as _PlayerTrait,
-    ViewHit     as _ViewHit,
+    Player          as _Player,
+    PlayerTrait     as _PlayerTrait,
+    PlayerStatus    as _PlayerStatus,
+    ViewHit         as _ViewHit,
 };
 
 #[pyclass]
@@ -75,6 +76,15 @@ impl Player {
     #[getter]
     pub fn y(&self) -> f64 {
         self.0.get_y()
+    }
+
+    #[getter]
+    pub fn status(&self) -> &str {
+        match self.0.lock().unwrap().status {
+            _PlayerStatus::Win => "[WIN]",
+            _PlayerStatus::InGame => "[INGAME]",
+            _PlayerStatus::KilledBy(_) => "[DEAD]",
+        }
     }
 
     pub fn view(&self) -> Vec<(&str, f64)> {
