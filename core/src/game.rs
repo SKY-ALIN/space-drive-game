@@ -165,6 +165,8 @@ impl GameTrait for Mutex<Game> {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, Mutex};
+
     use crate::{
         map::{Barrier, Map},
         player::{Player, PlayerTrait},
@@ -179,11 +181,17 @@ mod tests {
         (value * 100000.0).round() / 100000.0
     }
 
+    fn get_stub_player() -> Arc<Mutex<Player>> {
+        Player::create_with_direction(99.0, 99.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED)
+    }
+
     #[test]
     fn test_movement() {
         let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let stub_p = get_stub_player();
         let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
+        game.register_player(&stub_p);
         p.set_speed(0.5);
 
         game.process(1.0);
@@ -197,8 +205,10 @@ mod tests {
     #[test]
     fn test_borders_collision() {
         let p = Player::create_with_direction(1.0, 1.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED);
+        let stub_p = get_stub_player();
         let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
+        game.register_player(&stub_p);
         p.set_speed(1.0);
 
         game.process(1.0);
@@ -212,6 +222,7 @@ mod tests {
     #[test]
     fn test_barriers_collision() {
         let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let stub_p = get_stub_player();
         let mut map = Map::new(100.0, 100.0, 0, 0.0, SEED);
         map.barriers.push(Barrier {
             x: 1.0,
@@ -225,6 +236,7 @@ mod tests {
         });
         let game = Game::create(map);
         game.register_player(&p);
+        game.register_player(&stub_p);
         p.set_speed(1.0);
 
         game.process(1.0);
@@ -242,8 +254,10 @@ mod tests {
 
         let p =
             Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let stub_p = get_stub_player();
         let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
+        game.register_player(&stub_p);
 
         {
             let missiles = &game.lock().unwrap().missiles;
@@ -292,8 +306,10 @@ mod tests {
 
         let p =
             Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let stub_p = get_stub_player();
         let game = Game::create(Map::new(MAP_SIZE, MAP_SIZE, 0, 0.0, SEED));
         game.register_player(&p);
+        game.register_player(&stub_p);
 
         // Launch missiles in different directions to check collision for each border
         p.fire();
@@ -354,6 +370,7 @@ mod tests {
 
         let p =
             Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 90.0, 7, 0.0, MISSILE_SPEED);
+        let stub_p = get_stub_player();
         let mut map = Map::new(100.0, 100.0, 0, 0.0, SEED);
         map.barriers.push(Barrier {
             x: TARGET_X,
@@ -362,6 +379,7 @@ mod tests {
         });
         let game = Game::create(map);
         game.register_player(&p);
+        game.register_player(&stub_p);
 
         // Launch a missile into a barrier
         p.fire();
