@@ -1,10 +1,15 @@
 from space_drive_game import Game, Map, Player
 
 
+def get_stub_player() -> Player:
+    return Player(x=99, y=99, r=1, max_speed=1, direction=0)
+
+
 def test_movement(empty_map: Map):
     p = Player(x=1, y=1, r=1, max_speed=1, direction=0)
     game = Game(empty_map)
     game.register_player(p)
+    game.register_player(get_stub_player())
     p.set_speed(0.5)
 
     game.process(1.0)
@@ -19,6 +24,7 @@ def test_borders_collision(empty_map: Map):
     p = Player(x=1, y=1, r=0.5, max_speed=1, direction=-180)
     game = Game(empty_map)
     game.register_player(p)
+    game.register_player(get_stub_player())
     p.set_speed(1)
 
     game.process(1.0)
@@ -37,6 +43,7 @@ def test_missiles_movement(empty_map: Map):
     p = Player(x=START_X, y=START_Y, r=0.5, max_speed=1, missile_speed=MISSILE_SPEED, direction=0)
     game = Game(empty_map)
     game.register_player(p)
+    game.register_player(get_stub_player())
 
     missiles = game.get_missiles()
     assert len(missiles) == 0
@@ -77,6 +84,7 @@ def test_missiles_borders_collision(empty_map: Map):
     p = Player(x=START_X, y=START_Y, r=0.5, max_speed=1, missile_speed=MISSILE_SPEED, direction=0)
     game = Game(empty_map)
     game.register_player(p)
+    game.register_player(get_stub_player())
 
     # Launch missiles in different directions to check collision for each border
     p.fire()
