@@ -1,10 +1,8 @@
 use std::f64::consts::PI;
 use std::sync::{Arc, Mutex};
 
-use crate::player::PlayerStatus;
-
 use super::map::Map;
-use super::player::{Missile, Player};
+use super::player::{Missile, Player, PlayerStatus};
 
 const TIME_STEP: f64 = 0.1;
 
