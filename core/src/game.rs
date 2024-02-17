@@ -8,7 +8,7 @@ use super::player::{Missile, Player};
 
 const TIME_STEP: f64 = 0.1;
 
-enum GameStatus {
+pub enum GameStatus {
     On,
     Over(Arc<Mutex<Player>>),
     OverDraw,
@@ -18,7 +18,7 @@ pub struct Game {
     pub map: Map,
     pub players: Vec<Arc<Mutex<Player>>>,
     pub missiles: Vec<Missile>,
-    status: GameStatus,
+    pub status: GameStatus,
 }
 
 impl Game {

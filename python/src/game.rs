@@ -3,8 +3,9 @@ use std::sync::{Arc, Mutex};
 
 #[rustfmt::skip]
 use space_drive_game_core::game::{
-    Game      as _Game,
-    GameTrait as _GameTrait,
+    Game        as _Game,
+    GameTrait   as _GameTrait,
+    GameStatus  as _GameStatus,
 };
 
 use super::map::Map;
@@ -24,6 +25,10 @@ impl Game {
         self.0.register_player(&player.0);
     }
 
+    fn process(&self, time: f64) {
+        self.0.process(time);
+    }
+
     fn get_missiles(&self) -> Vec<(f64, f64)> {
         self.0
             .lock()
@@ -34,7 +39,12 @@ impl Game {
             .collect()
     }
 
-    fn process(&self, time: f64) {
-        self.0.process(time);
+    #[getter]
+    pub fn status(&self) -> &str {
+        match self.0.lock().unwrap().status {
+            _GameStatus::On => "[ON]",
+            _GameStatus::Over(_) => "[OVER]",
+            _GameStatus::OverDraw => "[OVER]",
+        }
     }
 }
