@@ -63,7 +63,12 @@ fn main() -> Result<(), Error> {
                 thread::spawn(move || {
                     let ip = stream.peer_addr().unwrap();
                     info!("Open connection {}", ip);
-                    let _ = handle_stream(stream, cloned_game_ref, cloned_config_ref, cloned_last_processing_time_ref);
+                    let _ = handle_stream(
+                        stream,
+                        cloned_game_ref,
+                        cloned_config_ref,
+                        cloned_last_processing_time_ref,
+                    );
                     info!("Close connection {}", ip);
                 });
             }

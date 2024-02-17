@@ -204,7 +204,8 @@ mod tests {
 
     #[test]
     fn test_borders_collision() {
-        let mut p = Player::create_with_direction(1.0, 1.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED);
+        let mut p =
+            Player::create_with_direction(1.0, 1.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
         let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);

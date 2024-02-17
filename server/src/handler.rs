@@ -3,9 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::net::{Shutdown, TcpStream};
 use std::sync::{Arc, Mutex};
-use std::time::{self, SystemTime};
+use std::time::SystemTime;
 
-use space_drive_game_core::{Game, GameTrait, Player, PlayerTrait, ViewHit as _ViewHit, ViewTrait};
+use space_drive_game_core::{
+    Game, GameTrait, Player, PlayerStatus as _PlayerStatus, PlayerTrait, ViewHit as _ViewHit,
+    ViewTrait,
+};
 
 use crate::Config;
 
@@ -25,11 +28,18 @@ struct View {
     view: Vec<ViewHit>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "snake_case", tag = "action")]
 enum Action {
     Move { rotate: f64, speed: f64 },
     Fire,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case", tag = "result")]
+enum PlayerResult {
+    Killed { by: String },
+    Win,
 }
 
 struct Connection(TcpStream);
@@ -110,6 +120,20 @@ pub fn handle_stream(
         let action = conn.receive::<Action>()?;
 
         let mut locked_player = player.lock().unwrap();
+
+        match locked_player.status {
+            _PlayerStatus::Win => {
+                conn.send(PlayerResult::Win);
+                break;
+            }
+            _PlayerStatus::KilledBy(killer_id) => {
+                conn.send(PlayerResult::Killed {
+                    by: killer_id.to_string(),
+                });
+                break;
+            }
+            _ => {}
+        }
 
         match action {
             Action::Fire => {

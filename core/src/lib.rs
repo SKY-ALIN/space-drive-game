@@ -5,4 +5,4 @@ pub mod ray_marching;
 
 pub use game::{Game, GameTrait};
 pub use map::Map;
-pub use player::{Player, PlayerTrait, ViewHit, ViewTrait};
+pub use player::{Player, PlayerStatus, PlayerTrait, ViewHit, ViewTrait};
