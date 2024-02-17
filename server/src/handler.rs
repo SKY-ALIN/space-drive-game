@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::net::{Shutdown, TcpStream};
 use std::sync::{Arc, Mutex};
+use std::time::{self, SystemTime};
 
-use space_drive_game_core::{Game, GameTrait, Player, PlayerTrait, ViewHit as _ViewHit};
+use space_drive_game_core::{Game, GameTrait, Player, PlayerTrait, ViewHit as _ViewHit, ViewTrait};
 
 use crate::Config;
 
@@ -24,12 +25,19 @@ struct View {
     view: Vec<ViewHit>,
 }
 
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "snake_case", tag = "action")]
+enum Action {
+    Move { rotate: f64, speed: f64 },
+    Fire,
+}
+
 struct Connection(TcpStream);
 
 impl Connection {
     #[allow(dead_code)]
     fn send<T: Serialize>(&mut self, data: T) {
-        debug!("{:?}", serde_json::to_string(&data).unwrap());
+        debug!("{}", serde_json::to_string_pretty(&data).unwrap());
         let _ = self
             .0
             .write_all(serde_json::to_string(&data).unwrap().as_bytes());
@@ -71,6 +79,7 @@ pub fn handle_stream(
     stream: TcpStream,
     game: Arc<Mutex<Game>>,
     config: Arc<Config>,
+    last_processing_time: Arc<Mutex<SystemTime>>,
 ) -> Result<(), serde_json::Error> {
     let ip = stream.peer_addr().unwrap();
     let mut conn = Connection(stream);
@@ -89,13 +98,40 @@ pub fn handle_stream(
         coordinates.1,
         config.player_radius,
         config.player_max_speed,
-        config.player_view_angel,
+        config.player_view_angle,
         config.player_rays_amount,
         config.player_missile_speed,
     );
     game.register_player(&player);
 
     conn.send(make_rasponse_from_view(player.view()));
+
+    loop {
+        let action = conn.receive::<Action>()?;
+
+        let mut locked_player = player.lock().unwrap();
+
+        match action {
+            Action::Fire => {
+                info!(target: target, "Fire");
+                locked_player.fire()
+            }
+            Action::Move { rotate, speed } => {
+                info!(target: target, "Move rotate={}, speed={}", rotate, speed);
+                locked_player.rotate(rotate);
+                locked_player.set_speed(speed);
+            }
+        }
+        drop(locked_player);
+
+        conn.send(make_rasponse_from_view(player.view()));
+
+        let now = SystemTime::now();
+        let mut locked_last_processing_time = last_processing_time.lock().unwrap();
+        let timedelta = now.duration_since(*locked_last_processing_time);
+        *locked_last_processing_time = now;
+        game.process(timedelta.unwrap().as_secs_f64());
+    }
 
     conn.close();
     info!(target: target, "Finish processing");

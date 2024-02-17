@@ -10,7 +10,7 @@ const DEFAULT_MAP_MAX_BARRIER_RADIUS: f64 = 50.0;
 const DEFAULT_MAP_SEED: Option<u64> = None;
 const DEFAULT_PLAYER_RADIUS: f64 = 5.0;
 const DEFAULT_PLAYER_MAX_SPEED: f64 = 2.0;
-const DEFAULT_PLAYER_VIEW_ANGEL: f64 = 30.0;
+const DEFAULT_PLAYER_VIEW_ANGLE: f64 = 30.0;
 const DEFAULT_PLAYER_RAYS_AMOUNT: u16 = 13;
 const DEFAULT_PLAYER_MISSILE_SPEED: f64 = 5.0;
 
@@ -32,8 +32,8 @@ pub struct Config {
     pub player_radius: f64,
     #[serde(default = "default_player_max_speed")]
     pub player_max_speed: f64,
-    #[serde(default = "default_player_view_angel")]
-    pub player_view_angel: f64,
+    #[serde(default = "default_player_view_angle")]
+    pub player_view_angle: f64,
     #[serde(default = "default_player_rays_amount")]
     pub player_rays_amount: u16,
     #[serde(default = "default_player_missile_speed")]
@@ -72,8 +72,8 @@ fn default_player_max_speed() -> f64 {
     DEFAULT_PLAYER_MAX_SPEED
 }
 
-fn default_player_view_angel() -> f64 {
-    DEFAULT_PLAYER_VIEW_ANGEL
+fn default_player_view_angle() -> f64 {
+    DEFAULT_PLAYER_VIEW_ANGLE
 }
 
 fn default_player_rays_amount() -> u16 {

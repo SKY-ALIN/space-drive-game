@@ -34,7 +34,7 @@ pub struct Player {
     pub direction: f64,
     pub speed: f64,
     max_speed: f64,
-    view_angel: f64,
+    view_angle: f64,
     rays_amount: u16,
     game: Weak<Mutex<Game>>,
     pub id: usize,
@@ -47,7 +47,7 @@ impl Player {
         y: f64,
         r: f64,
         max_speed: f64,
-        view_angel: f64,
+        view_angle: f64,
         rays_amount: u16,
         missile_speed: f64,
     ) -> Arc<Mutex<Self>> {
@@ -58,7 +58,7 @@ impl Player {
             direction: rand::thread_rng().gen_range(-180f64..180f64),
             speed: 0.0,
             max_speed,
-            view_angel,
+            view_angle,
             rays_amount,
             game: Weak::new(),
             id: get_id(),
@@ -73,7 +73,7 @@ impl Player {
         y: f64,
         r: f64,
         max_speed: f64,
-        view_angel: f64,
+        view_angle: f64,
         rays_amount: u16,
         direction: f64,
         missile_speed: f64,
@@ -85,7 +85,7 @@ impl Player {
             direction,
             speed: 0.0,
             max_speed,
-            view_angel,
+            view_angle,
             rays_amount,
             game: Weak::new(),
             id: get_id(),
@@ -100,61 +100,114 @@ impl Player {
 }
 
 pub trait PlayerTrait {
-    fn get_x(self: &Arc<Self>) -> f64;
-    fn get_y(self: &Arc<Self>) -> f64;
-    fn get_direction(self: &Arc<Self>) -> f64;
-    fn rotate(self: &Arc<Self>, direction: f64);
-    fn get_speed(self: &Arc<Self>) -> f64;
-    fn set_speed(self: &Arc<Self>, speed: f64);
-    fn view(self: &Arc<Self>) -> Vec<ViewHit>;
-    fn fire(self: &Arc<Self>);
+    fn get_x(&self) -> f64;
+    fn get_y(&self) -> f64;
+    fn get_direction(&self) -> f64;
+    fn rotate(&mut self, angle: f64);
+    fn get_speed(&self) -> f64;
+    fn set_speed(&mut self, speed: f64);
+    fn fire(&self);
 }
 
-impl PlayerTrait for Mutex<Player> {
-    fn get_x(self: &Arc<Self>) -> f64 {
-        self.lock().unwrap().x
+pub trait ViewTrait {
+    fn view(&self) -> Vec<ViewHit>;
+}
+
+impl PlayerTrait for Player {
+    fn get_x(&self) -> f64 {
+        self.x
     }
 
-    fn get_y(self: &Arc<Self>) -> f64 {
-        self.lock().unwrap().y
+    fn get_y(&self) -> f64 {
+        self.y
     }
 
-    fn get_direction(self: &Arc<Self>) -> f64 {
-        self.lock().unwrap().direction
+    fn get_direction(&self) -> f64 {
+        self.direction
     }
 
-    fn rotate(self: &Arc<Self>, direction: f64) {
-        self.lock().unwrap().direction += direction;
+    fn rotate(&mut self, angle: f64) {
+        self.direction += angle;
     }
 
-    fn get_speed(self: &Arc<Self>) -> f64 {
-        self.lock().unwrap().speed
+    fn get_speed(&self) -> f64 {
+        self.speed
     }
 
-    fn set_speed(self: &Arc<Self>, speed: f64) {
-        let mut player = self.lock().unwrap();
-        if speed <= player.max_speed {
-            player.speed = speed;
+    fn set_speed(&mut self, speed: f64) {
+        if speed <= self.max_speed {
+            self.speed = speed;
         } else {
-            player.speed = player.max_speed;
+            self.speed = self.max_speed;
         }
     }
 
-    fn view(self: &Arc<Self>) -> Vec<ViewHit> {
-        // Get player's data
+    fn fire(&self) {
+        let weak_game = self.game.upgrade();
+        if weak_game.is_none() {
+            return;
+        }
+        let mutex_game = weak_game.unwrap();
+        let mut game = mutex_game.lock().unwrap();
+        game.missiles.push(Missile {
+            x: self.x,
+            y: self.y,
+            direction: self.direction,
+            id: get_id(),
+            player_id: self.id,
+            speed: self.missile_speed,
+        })
+    }
+}
 
+impl PlayerTrait for Arc<Mutex<Player>> {
+    fn get_x(&self) -> f64 {
+        self.lock().unwrap().get_x()
+    }
+
+    fn get_y(&self) -> f64 {
+        self.lock().unwrap().get_y()
+    }
+
+    fn get_direction(&self) -> f64 {
+        self.lock().unwrap().get_direction()
+    }
+
+    fn rotate(&mut self, angle: f64) {
+        self.lock().unwrap().rotate(angle)
+    }
+
+    fn get_speed(&self) -> f64 {
+        self.lock().unwrap().get_speed()
+    }
+
+    fn set_speed(&mut self, speed: f64) {
+        self.lock().unwrap().set_speed(speed);
+    }
+
+    fn fire(&self) {
+        self.lock().unwrap().fire();
+    }
+}
+
+impl ViewTrait for Arc<Mutex<Player>> {
+    fn view(&self) -> Vec<ViewHit> {
         let player = self.lock().unwrap();
+
         let weak_game = player.game.upgrade();
         if weak_game.is_none() {
             return Vec::new();
         }
         let game = weak_game.unwrap();
+
+        // Get player's data
+
         let player_direction = player.direction;
         let player_radius = player.r;
         let player_x = player.x;
         let player_y = player.y;
         let player_rays_amount = player.rays_amount;
-        let player_view_angel = player.view_angel;
+        let player_view_angle = player.view_angle;
         let player_id = player.id;
         drop(player);
 
@@ -162,13 +215,13 @@ impl PlayerTrait for Mutex<Player> {
 
         let mut res = Vec::new();
         for i in 0..player_rays_amount {
-            let angel_offset = if player_rays_amount > 1 {
-                player_view_angel / ((player_rays_amount - 1) as f64)
+            let angle_offset = if player_rays_amount > 1 {
+                player_view_angle / ((player_rays_amount - 1) as f64)
             } else {
-                player_view_angel
+                player_view_angle
             };
             let norm_i: f64 = (i as i16 - (player_rays_amount as i16 / 2)) as f64; // Example: if N_RAYS = 7 and i is [0;7), then norm_i will be -[3;3].
-            let ray_direction = player_direction + norm_i * angel_offset;
+            let ray_direction = player_direction + norm_i * angle_offset;
             let ray_hit = ray_marching(&game, player_x, player_y, ray_direction, player_id);
 
             match ray_hit {
@@ -185,24 +238,6 @@ impl PlayerTrait for Mutex<Player> {
         }
         res
     }
-
-    fn fire(self: &Arc<Self>) {
-        let player = self.lock().unwrap();
-        let weak_game = player.game.upgrade();
-        if weak_game.is_none() {
-            return;
-        }
-        let mutex_game = weak_game.unwrap();
-        let mut game = mutex_game.lock().unwrap();
-        game.missiles.push(Missile {
-            x: player.x,
-            y: player.y,
-            direction: player.direction,
-            id: get_id(),
-            player_id: player.id,
-            speed: player.missile_speed,
-        })
-    }
 }
 
 #[cfg(test)]
@@ -212,7 +247,7 @@ mod tests {
         map::{Barrier, Map},
     };
 
-    use super::{Player, PlayerTrait, ViewHit};
+    use super::{Player, PlayerTrait, ViewHit, ViewTrait};
     use std::sync::{Arc, Mutex};
 
     const X: f64 = 50.0;
@@ -220,7 +255,7 @@ mod tests {
     const R: f64 = 1.0;
     const DIRECTION: f64 = 0.0;
     const MAX_SPEED: f64 = 0.0;
-    const VIEW_ANGEL: f64 = 60.0;
+    const VIEW_ANGLE: f64 = 60.0;
     const RAYS_AMOUNT: u16 = 7;
     const MISSILE_SPEED: f64 = 1.0;
 
@@ -230,7 +265,7 @@ mod tests {
             Y,
             R,
             MAX_SPEED,
-            VIEW_ANGEL,
+            VIEW_ANGLE,
             RAYS_AMOUNT,
             DIRECTION,
             MISSILE_SPEED,
@@ -248,7 +283,7 @@ mod tests {
 
     #[test]
     fn test_rotation() {
-        let p = get_player();
+        let mut p = get_player();
         p.rotate(180.0);
         assert_eq!(p.get_direction(), 180.0);
         p.rotate(-360.0);
@@ -264,17 +299,17 @@ mod tests {
             r: 10.0,
         });
         let game = Game::create(map);
-        let p = Player::create_with_direction(
+        let mut p = Player::create_with_direction(
             50.0,
             50.0,
             10.0,
             MAX_SPEED,
-            VIEW_ANGEL,
+            VIEW_ANGLE,
             1,
             DIRECTION,
             MISSILE_SPEED,
         );
-        let p2 = Player::create(100.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGEL, 0, MISSILE_SPEED);
+        let p2 = Player::create(100.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGLE, 0, MISSILE_SPEED);
         game.register_player(&p);
         game.register_player(&p2);
 
