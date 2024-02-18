@@ -3,7 +3,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use crate::Error;
 
-const DEFAULT_MAP_WIDHT: f64 = 1500.0;
+const DEFAULT_MAP_WIDTH: f64 = 1500.0;
 const DEFAULT_MAP_HEIGHT: f64 = 1000.0;
 const DEFAULT_MAP_BARRIERS_AMOUNT: u8 = 50;
 const DEFAULT_MAP_MAX_BARRIER_RADIUS: f64 = 50.0;
@@ -18,8 +18,8 @@ const DEFAULT_PLAYER_MISSILE_SPEED: f64 = 5.0;
 pub struct Config {
     #[serde(default = "default_host")]
     pub host: SocketAddr,
-    #[serde(default = "default_map_widht")]
-    pub map_widht: f64,
+    #[serde(default = "default_map_width")]
+    pub map_width: f64,
     #[serde(default = "default_map_height")]
     pub map_height: f64,
     #[serde(default = "default_map_barriers_amount")]
@@ -44,8 +44,8 @@ fn default_host() -> SocketAddr {
     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 3333)
 }
 
-fn default_map_widht() -> f64 {
-    DEFAULT_MAP_WIDHT
+fn default_map_width() -> f64 {
+    DEFAULT_MAP_WIDTH
 }
 
 fn default_map_height() -> f64 {

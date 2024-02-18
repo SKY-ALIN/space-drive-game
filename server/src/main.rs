@@ -39,14 +39,14 @@ fn main() -> Result<(), Error> {
 
     let map = match config.map_seed {
         Some(seed) => Map::new(
-            config.map_widht,
+            config.map_width,
             config.map_height,
             config.map_barriers_amount,
             config.map_max_barrier_radius,
             seed,
         ),
         None => Map::new_without_seed(
-            config.map_widht,
+            config.map_width,
             config.map_height,
             config.map_barriers_amount,
             config.map_max_barrier_radius,

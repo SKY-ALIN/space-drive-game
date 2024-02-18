@@ -1,4 +1,4 @@
-use log::{debug, info};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::Write;
@@ -13,7 +13,7 @@ use space_drive_game_core::{
 
 use crate::Config;
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct PlayerName {
     name: String,
 }
@@ -29,7 +29,7 @@ struct View {
     view: Vec<ViewHit>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "action")]
 enum Action {
     Move { rotate: f64, speed: f64 },
@@ -38,7 +38,7 @@ enum Action {
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case", tag = "result")]
-enum PlayerResult {
+enum PlayerStatus {
     Killed { by: String },
     Win,
 }
@@ -48,15 +48,26 @@ struct Connection(TcpStream);
 impl Connection {
     #[allow(dead_code)]
     fn send<T: Serialize>(&mut self, data: T) {
-        debug!("{}", serde_json::to_string(&data).unwrap());
-        let _ = self
-            .0
-            .write_all(serde_json::to_string(&data).unwrap().as_bytes());
+        let str_data = serde_json::to_string(&data).unwrap();
+        debug!("{}", str_data);
+        let _ = self.0.write_all(str_data.as_bytes());
     }
 
-    fn receive<'a, T: Deserialize<'a>>(&mut self) -> Result<T, serde_json::Error> {
+    fn receive<'a, T: Deserialize<'a> + Serialize>(&mut self) -> Result<T, serde_json::Error> {
         let mut de = serde_json::Deserializer::from_reader(&self.0);
-        T::deserialize(&mut de)
+        let res = T::deserialize(&mut de);
+        match &res {
+            Ok(data) => debug!("{}", serde_json::to_string(data).unwrap()),
+            Err(e) => {
+                let ip = self.0.peer_addr().unwrap();
+                if e.is_eof() {
+                    warn!("{} suddenly closed its connection", ip);
+                } else {
+                    error!("Invalid data from {}, err: {}", ip, e);
+                }
+            }
+        }
+        res
     }
 
     fn close(&self) {
@@ -129,14 +140,14 @@ pub fn handle_stream(
 
         match locked_player.status {
             _PlayerStatus::Win => {
-                conn.send(PlayerResult::Win);
+                conn.send(PlayerStatus::Win);
                 break;
             }
             _PlayerStatus::KilledBy(killer_id) => {
                 let unwraped_player_names = player_names.lock().unwrap();
                 let killer_name = unwraped_player_names.get(&killer_id).unwrap().clone();
                 drop(unwraped_player_names);
-                conn.send(PlayerResult::Killed { by: killer_name });
+                conn.send(PlayerStatus::Killed { by: killer_name });
                 break;
             }
             _ => {}

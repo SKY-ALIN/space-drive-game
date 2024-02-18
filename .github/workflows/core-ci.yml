@@ -3,7 +3,7 @@ name: Core CI
 on:
   push:
     branches:
-      - 'main'
+      - main
   pull_request: {}
 
 permissions:
