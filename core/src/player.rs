@@ -110,6 +110,7 @@ impl Player {
 }
 
 pub trait PlayerTrait {
+    fn get_id(&self) -> usize;
     fn get_x(&self) -> f64;
     fn get_y(&self) -> f64;
     fn get_direction(&self) -> f64;
@@ -124,6 +125,10 @@ pub trait ViewTrait {
 }
 
 impl PlayerTrait for Player {
+    fn get_id(&self) -> usize {
+        self.id
+    }
+
     fn get_x(&self) -> f64 {
         self.x
     }
@@ -171,6 +176,10 @@ impl PlayerTrait for Player {
 }
 
 impl PlayerTrait for Arc<Mutex<Player>> {
+    fn get_id(&self) -> usize {
+        self.lock().unwrap().get_id()
+    }
+
     fn get_x(&self) -> f64 {
         self.lock().unwrap().get_x()
     }

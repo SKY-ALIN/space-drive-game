@@ -1,4 +1,5 @@
 use log::{error, info};
+use std::collections::HashMap;
 use std::env;
 use std::io;
 use std::net::TcpListener;
@@ -53,6 +54,7 @@ fn main() -> Result<(), Error> {
     };
     let game = Game::create(map);
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
+    let player_names: Arc<Mutex<HashMap<usize, String>>> = Arc::new(Mutex::new(HashMap::new()));
 
     for stream in listener.incoming() {
         match stream {
@@ -60,6 +62,7 @@ fn main() -> Result<(), Error> {
                 let cloned_game_ref = Arc::clone(&game);
                 let cloned_config_ref = Arc::clone(&config);
                 let cloned_last_processing_time_ref = Arc::clone(&last_processing_time);
+                let cloned_player_names_ref = Arc::clone(&player_names);
                 thread::spawn(move || {
                     let ip = stream.peer_addr().unwrap();
                     info!("Open connection {}", ip);
@@ -68,6 +71,7 @@ fn main() -> Result<(), Error> {
                         cloned_game_ref,
                         cloned_config_ref,
                         cloned_last_processing_time_ref,
+                        cloned_player_names_ref,
                     );
                     info!("Close connection {}", ip);
                 });

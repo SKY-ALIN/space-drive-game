@@ -1,5 +1,6 @@
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::io::Write;
 use std::net::{Shutdown, TcpStream};
 use std::sync::{Arc, Mutex};
@@ -47,7 +48,7 @@ struct Connection(TcpStream);
 impl Connection {
     #[allow(dead_code)]
     fn send<T: Serialize>(&mut self, data: T) {
-        debug!("{}", serde_json::to_string_pretty(&data).unwrap());
+        debug!("{}", serde_json::to_string(&data).unwrap());
         let _ = self
             .0
             .write_all(serde_json::to_string(&data).unwrap().as_bytes());
@@ -90,6 +91,7 @@ pub fn handle_stream(
     game: Arc<Mutex<Game>>,
     config: Arc<Config>,
     last_processing_time: Arc<Mutex<SystemTime>>,
+    player_names: Arc<Mutex<HashMap<usize, String>>>,
 ) -> Result<(), serde_json::Error> {
     let ip = stream.peer_addr().unwrap();
     let mut conn = Connection(stream);
@@ -114,6 +116,10 @@ pub fn handle_stream(
     );
     game.register_player(&player);
 
+    let mut unwraped_player_names = player_names.lock().unwrap();
+    unwraped_player_names.insert(player.get_id(), player_name);
+    drop(unwraped_player_names);
+
     conn.send(make_rasponse_from_view(player.view()));
 
     loop {
@@ -127,9 +133,10 @@ pub fn handle_stream(
                 break;
             }
             _PlayerStatus::KilledBy(killer_id) => {
-                conn.send(PlayerResult::Killed {
-                    by: killer_id.to_string(),
-                });
+                let unwraped_player_names = player_names.lock().unwrap();
+                let killer_name = unwraped_player_names.get(&killer_id).unwrap().clone();
+                drop(unwraped_player_names);
+                conn.send(PlayerResult::Killed { by: killer_name });
                 break;
             }
             _ => {}
