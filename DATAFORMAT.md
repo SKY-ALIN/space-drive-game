@@ -39,3 +39,17 @@ As a response, the player gets JSON with a `view` key that contains a list of ra
 ```
 
 `object` can be `BORDER` or `BARRIER` or `ENEMY`.
+
+When the player die or win, they get object with `result` ket instead of `view`:
+
+```json
+{"result": "win"}
+```
+
+or
+
+```json
+{"result": "killed", "by": "killer's name"}
+```
+
+The value is `win` if the player wins and `killed` if the player dies.
