@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use std::env;
 use std::io;
 use std::net::TcpListener;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use space_drive_game_core::{Game, Map};
 
@@ -15,26 +16,27 @@ mod handler;
 use config::Config;
 use handler::handle_stream;
 
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
-    EnvError(envy::Error),
-    TCPListenerError(io::Error),
+    #[error(transparent)]
+    EnvError(#[from] envy::Error),
+    #[error(transparent)]
+    TCPListenerError(#[from] io::Error),
 }
 
 fn main() -> Result<(), Error> {
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "debug")
     }
+    if env::var("RUST_LOG_STYLE").is_err() {
+        env::set_var("RUST_LOG_STYLE", "always")
+    }
     env_logger::init();
 
     let config = Arc::new(Config::new()?);
-    let listener = match TcpListener::bind(config.host) {
-        Ok(l) => l,
-        Err(e) => {
-            error!("{e}");
-            return Err(Error::TCPListenerError(e));
-        }
-    };
+
+    let listener = TcpListener::bind(config.host)?;
+    listener.set_nonblocking(true)?;
     info!("Server is running on {}", config.host);
 
     let map = match config.map_seed {
@@ -56,6 +58,10 @@ fn main() -> Result<(), Error> {
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
     let player_names: Arc<Mutex<HashMap<usize, String>>> = Arc::new(Mutex::new(HashMap::new()));
 
+    let term = Arc::new(AtomicBool::new(false));
+    for sig in signal_hook::consts::TERM_SIGNALS {
+        signal_hook::flag::register(*sig, Arc::clone(&term))?;
+    }
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
@@ -76,12 +82,18 @@ fn main() -> Result<(), Error> {
                     info!("Close connection {}", ip);
                 });
             }
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
+                thread::sleep(Duration::from_millis(300));
+                if term.load(Ordering::Relaxed) {
+                    info!("Server is shouting down");
+                    break;
+                }
+            }
             Err(e) => {
                 error!("Client connection error: {e}");
             }
         }
     }
 
-    info!("Server is shouting down");
     Ok(())
 }

@@ -7,4 +7,10 @@ services:
     build:
       context: .
     ports:
-      - "3333:3333"
+      - "3333:3333/tcp"
+
+  space-drive-visualizer:
+    image: vsezol/space-drive-visualizer:latest
+    container_name: space-drive-visualizer
+    depends_on:
+      - space-drive-game

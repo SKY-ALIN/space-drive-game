@@ -13,8 +13,8 @@ RUN cargo build --target x86_64-unknown-linux-musl --package space_drive_game_se
 
 FROM scratch
 
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/space_drive_game_server /bin/
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/space_drive_game_server /usr/local/bin/space_drive_game_server
 
-EXPOSE 3333
+EXPOSE 3333/tcp
 
-CMD ["/bin/space_drive_game_server"]
+CMD ["space_drive_game_server"]

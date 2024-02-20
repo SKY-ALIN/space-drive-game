@@ -1,8 +1,6 @@
 use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
-use crate::Error;
-
 const DEFAULT_MAP_WIDTH: f64 = 1500.0;
 const DEFAULT_MAP_HEIGHT: f64 = 1000.0;
 const DEFAULT_MAP_BARRIERS_AMOUNT: u8 = 50;
@@ -41,7 +39,7 @@ pub struct Config {
 }
 
 fn default_host() -> SocketAddr {
-    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 3333)
+    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3333)
 }
 
 fn default_map_width() -> f64 {
@@ -85,10 +83,7 @@ fn default_player_missile_speed() -> f64 {
 }
 
 impl Config {
-    pub fn new() -> Result<Config, Error> {
-        match envy::from_env::<Config>() {
-            Ok(c) => Ok(c),
-            Err(e) => Err(Error::EnvError(e)),
-        }
+    pub fn new() -> Result<Config, envy::Error> {
+        envy::from_env::<Config>()
     }
 }
