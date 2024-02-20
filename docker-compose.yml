@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  space-drive-game:
+    image: space-drive-game:latest
+    container_name: space-drive-game
+    build:
+      context: .
+    ports:
+      - "3333:3333"

@@ -112,9 +112,9 @@ pub fn handle_stream(
 
     info!(target: target, "Start processing");
 
-    let unwraped_game = game.lock().unwrap();
-    let coordinates = unwraped_game.map.get_free_point(config.player_radius);
-    drop(unwraped_game);
+    let locked_game = game.lock().unwrap();
+    let coordinates = locked_game.map.get_free_point(config.player_radius);
+    drop(locked_game);
 
     let player = Player::create(
         coordinates.0,
@@ -127,9 +127,9 @@ pub fn handle_stream(
     );
     game.register_player(&player);
 
-    let mut unwraped_player_names = player_names.lock().unwrap();
-    unwraped_player_names.insert(player.get_id(), player_name);
-    drop(unwraped_player_names);
+    let mut locked_player_names = player_names.lock().unwrap();
+    locked_player_names.insert(player.get_id(), player_name);
+    drop(locked_player_names);
 
     conn.send(make_rasponse_from_view(player.view()));
 
@@ -144,9 +144,9 @@ pub fn handle_stream(
                 break;
             }
             _PlayerStatus::KilledBy(killer_id) => {
-                let unwraped_player_names = player_names.lock().unwrap();
-                let killer_name = unwraped_player_names.get(&killer_id).unwrap().clone();
-                drop(unwraped_player_names);
+                let locked_player_names = player_names.lock().unwrap();
+                let killer_name = locked_player_names.get(&killer_id).unwrap().clone();
+                drop(locked_player_names);
                 conn.send(PlayerStatus::Killed { by: killer_name });
                 break;
             }

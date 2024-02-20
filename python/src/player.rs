@@ -3,11 +3,11 @@ use std::sync::{Arc, Mutex};
 
 #[rustfmt::skip]
 use space_drive_game_core::player::{
-    Player      as _Player,
-    PlayerTrait as _PlayerTrait,
+    Player          as _Player,
+    PlayerTrait     as _PlayerTrait,
     PlayerStatus    as _PlayerStatus,
-    ViewHit     as _ViewHit,
-    ViewTrait   as _ViewTrait,
+    ViewHit         as _ViewHit,
+    ViewTrait       as _ViewTrait,
 };
 
 #[pyclass]
