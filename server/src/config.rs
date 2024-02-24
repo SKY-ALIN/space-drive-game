@@ -1,25 +1,24 @@
 use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
-use crate::Error;
-
-const DEFAULT_MAP_WIDHT: f64 = 1500.0;
+const DEFAULT_MAP_WIDTH: f64 = 1500.0;
 const DEFAULT_MAP_HEIGHT: f64 = 1000.0;
 const DEFAULT_MAP_BARRIERS_AMOUNT: u8 = 50;
 const DEFAULT_MAP_MAX_BARRIER_RADIUS: f64 = 50.0;
 const DEFAULT_MAP_SEED: Option<u64> = None;
 const DEFAULT_PLAYER_RADIUS: f64 = 5.0;
 const DEFAULT_PLAYER_MAX_SPEED: f64 = 2.0;
-const DEFAULT_PLAYER_VIEW_ANGEL: f64 = 30.0;
+const DEFAULT_PLAYER_VIEW_ANGLE: f64 = 30.0;
 const DEFAULT_PLAYER_RAYS_AMOUNT: u16 = 13;
 const DEFAULT_PLAYER_MISSILE_SPEED: f64 = 5.0;
+const DEFAULT_PLAYERS_AMOUNT: usize = 2;
 
 #[derive(Deserialize)]
 pub struct Config {
     #[serde(default = "default_host")]
     pub host: SocketAddr,
-    #[serde(default = "default_map_widht")]
-    pub map_widht: f64,
+    #[serde(default = "default_map_width")]
+    pub map_width: f64,
     #[serde(default = "default_map_height")]
     pub map_height: f64,
     #[serde(default = "default_map_barriers_amount")]
@@ -32,20 +31,22 @@ pub struct Config {
     pub player_radius: f64,
     #[serde(default = "default_player_max_speed")]
     pub player_max_speed: f64,
-    #[serde(default = "default_player_view_angel")]
-    pub player_view_angel: f64,
+    #[serde(default = "default_player_view_angle")]
+    pub player_view_angle: f64,
     #[serde(default = "default_player_rays_amount")]
     pub player_rays_amount: u16,
     #[serde(default = "default_player_missile_speed")]
     pub player_missile_speed: f64,
+    #[serde(default = "default_players_amount")]
+    pub players_amount: usize,
 }
 
 fn default_host() -> SocketAddr {
-    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 3333)
+    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3333)
 }
 
-fn default_map_widht() -> f64 {
-    DEFAULT_MAP_WIDHT
+fn default_map_width() -> f64 {
+    DEFAULT_MAP_WIDTH
 }
 
 fn default_map_height() -> f64 {
@@ -72,8 +73,8 @@ fn default_player_max_speed() -> f64 {
     DEFAULT_PLAYER_MAX_SPEED
 }
 
-fn default_player_view_angel() -> f64 {
-    DEFAULT_PLAYER_VIEW_ANGEL
+fn default_player_view_angle() -> f64 {
+    DEFAULT_PLAYER_VIEW_ANGLE
 }
 
 fn default_player_rays_amount() -> u16 {
@@ -84,11 +85,12 @@ fn default_player_missile_speed() -> f64 {
     DEFAULT_PLAYER_MISSILE_SPEED
 }
 
+fn default_players_amount() -> usize {
+    DEFAULT_PLAYERS_AMOUNT
+}
+
 impl Config {
-    pub fn new() -> Result<Config, Error> {
-        match envy::from_env::<Config>() {
-            Ok(c) => Ok(c),
-            Err(e) => Err(Error::EnvError(e)),
-        }
+    pub fn new() -> Result<Config, envy::Error> {
+        envy::from_env::<Config>()
     }
 }

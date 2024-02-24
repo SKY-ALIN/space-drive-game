@@ -3,7 +3,7 @@ name: Core CI
 on:
   push:
     branches:
-      - '*'
+      - main
   pull_request: {}
 
 permissions:
@@ -12,6 +12,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    name: Test core
     steps:
       - uses: actions/checkout@v4
       - run: cargo test --package space_drive_game_core

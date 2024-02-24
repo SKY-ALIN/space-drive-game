@@ -7,6 +7,7 @@ use space_drive_game_core::player::{
     PlayerTrait     as _PlayerTrait,
     PlayerStatus    as _PlayerStatus,
     ViewHit         as _ViewHit,
+    ViewTrait       as _ViewTrait,
 };
 
 #[pyclass]
@@ -16,13 +17,13 @@ pub struct Player(pub Arc<Mutex<_Player>>);
 impl Player {
     #[allow(clippy::too_many_arguments)]
     #[new]
-    #[pyo3(signature = (x, y, r, max_speed = 1.0, view_angel = 60.0, rays_amount = 7, missile_speed = 1.0, direction = None))]
+    #[pyo3(signature = (x, y, r, max_speed = 1.0, view_angle = 60.0, rays_amount = 7, missile_speed = 1.0, direction = None))]
     pub fn new(
         x: f64,
         y: f64,
         r: f64,
         max_speed: f64,
-        view_angel: f64,
+        view_angle: f64,
         rays_amount: u16,
         missile_speed: f64,
         direction: Option<f64>,
@@ -33,7 +34,7 @@ impl Player {
                 y,
                 r,
                 max_speed,
-                view_angel,
+                view_angle,
                 rays_amount,
                 d,
                 missile_speed,
@@ -43,15 +44,15 @@ impl Player {
                 y,
                 r,
                 max_speed,
-                view_angel,
+                view_angle,
                 rays_amount,
                 missile_speed,
             )),
         }
     }
 
-    pub fn rotate(&mut self, direction: f64) {
-        self.0.rotate(direction);
+    pub fn rotate(&mut self, angle: f64) {
+        self.0.rotate(angle);
     }
 
     pub fn set_speed(&mut self, speed: f64) {

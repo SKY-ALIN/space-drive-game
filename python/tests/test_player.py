@@ -22,8 +22,8 @@ def test_rotation():
 
 def test_view(empty_map: Map, width: int, height: int):
     game = Game(empty_map)
-    p = Player(x=width-50, y=height-50, r=10, max_speed=1, view_angel=60, rays_amount=1, direction=0)
-    p2 = Player(x=width, y=height-50, r=10, max_speed=1, view_angel=60, rays_amount=1)
+    p = Player(x=width-50, y=height-50, r=10, max_speed=1, view_angle=60, rays_amount=1, direction=0)
+    p2 = Player(x=width, y=height-50, r=10, max_speed=1, view_angle=60, rays_amount=1)
     game.register_player(p)
     game.register_player(p2)
 

@@ -1,10 +1,8 @@
 use std::f64::consts::PI;
 use std::sync::{Arc, Mutex};
 
-use crate::player::PlayerStatus;
-
 use super::map::Map;
-use super::player::{Missile, Player};
+use super::player::{Missile, Player, PlayerStatus};
 
 const TIME_STEP: f64 = 0.1;
 
@@ -34,25 +32,29 @@ impl Game {
 }
 
 pub trait GameTrait {
-    fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>);
-    fn process(self: &Arc<Self>, time: f64);
+    fn process(&mut self, time: f64);
 }
 
-impl GameTrait for Mutex<Game> {
+pub trait RegisterPlayer {
+    fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>);
+}
+
+impl RegisterPlayer for Mutex<Game> {
     fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>) {
         player.lock().unwrap().mount_game(Arc::clone(self));
         let mut game = self.lock().unwrap();
         game.players.push(Arc::clone(player));
     }
+}
 
-    fn process(self: &Arc<Self>, time: f64) {
-        let mut game = self.lock().unwrap();
+impl GameTrait for Game {
+    fn process(&mut self, time: f64) {
         let Game {
             ref map,
             ref mut missiles,
             ref mut players,
             ref mut status,
-        } = *game;
+        } = *self;
 
         let mut time_left = time;
         let mut timedelta: f64;
@@ -163,6 +165,12 @@ impl GameTrait for Mutex<Game> {
     }
 }
 
+impl GameTrait for Arc<Mutex<Game>> {
+    fn process(&mut self, time: f64) {
+        self.lock().unwrap().process(time);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, Mutex};
@@ -172,7 +180,7 @@ mod tests {
         player::{Player, PlayerTrait},
     };
 
-    use super::{Game, GameTrait};
+    use super::{Game, GameTrait, RegisterPlayer};
 
     const SEED: u64 = 12345;
     const MISSILE_SPEED: f64 = 1.0;
@@ -187,9 +195,9 @@ mod tests {
 
     #[test]
     fn test_movement() {
-        let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let mut p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
+        let mut game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
         p.set_speed(0.5);
@@ -204,9 +212,10 @@ mod tests {
 
     #[test]
     fn test_borders_collision() {
-        let p = Player::create_with_direction(1.0, 1.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED);
+        let mut p =
+            Player::create_with_direction(1.0, 1.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
+        let mut game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
         p.set_speed(1.0);
@@ -221,7 +230,7 @@ mod tests {
 
     #[test]
     fn test_barriers_collision() {
-        let p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let mut p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
         let mut map = Map::new(100.0, 100.0, 0, 0.0, SEED);
         map.barriers.push(Barrier {
@@ -234,7 +243,7 @@ mod tests {
             y: 1.0,
             r: 1.0,
         });
-        let game = Game::create(map);
+        let mut game = Game::create(map);
         game.register_player(&p);
         game.register_player(&stub_p);
         p.set_speed(1.0);
@@ -252,10 +261,10 @@ mod tests {
         const START_X: f64 = 1.0;
         const START_Y: f64 = 1.0;
 
-        let p =
+        let mut p =
             Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
+        let mut game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
 
@@ -304,10 +313,10 @@ mod tests {
         const START_Y: f64 = 50.0;
         const MAP_SIZE: f64 = 100.0;
 
-        let p =
+        let mut p =
             Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let game = Game::create(Map::new(MAP_SIZE, MAP_SIZE, 0, 0.0, SEED));
+        let mut game = Game::create(Map::new(MAP_SIZE, MAP_SIZE, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
 
@@ -377,7 +386,7 @@ mod tests {
             y: TARGET_Y,
             r: 1.0,
         });
-        let game = Game::create(map);
+        let mut game = Game::create(map);
         game.register_player(&p);
         game.register_player(&stub_p);
 
