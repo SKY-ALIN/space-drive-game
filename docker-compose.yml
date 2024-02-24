@@ -14,3 +14,5 @@ services:
     container_name: space-drive-visualizer
     depends_on:
       - space-drive-game
+    ports:
+      - "3000:3000"

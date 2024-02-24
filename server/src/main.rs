@@ -2,8 +2,8 @@ use log::{error, info};
 use std::collections::HashMap;
 use std::env;
 use std::io;
-use std::net::TcpListener;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::net::{Shutdown, TcpListener};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, SystemTime};
@@ -57,6 +57,7 @@ fn main() -> Result<(), Error> {
     let game = Game::create(map);
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
     let player_names: Arc<Mutex<HashMap<usize, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let players_counter = Arc::new(AtomicUsize::new(0));
 
     let term = Arc::new(AtomicBool::new(false));
     for sig in signal_hook::consts::TERM_SIGNALS {
@@ -65,10 +66,18 @@ fn main() -> Result<(), Error> {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
+                let players_counter_val = players_counter.load(Ordering::Relaxed);
+                if players_counter_val >= config.players_amount {
+                    let _ = stream.shutdown(Shutdown::Both);
+                    continue;
+                }
+                players_counter.store(players_counter_val + 1, Ordering::SeqCst);
+
                 let cloned_game_ref = Arc::clone(&game);
                 let cloned_config_ref = Arc::clone(&config);
                 let cloned_last_processing_time_ref = Arc::clone(&last_processing_time);
                 let cloned_player_names_ref = Arc::clone(&player_names);
+                let cloned_players_counter_ref = Arc::clone(&players_counter);
                 thread::spawn(move || {
                     let ip = stream.peer_addr().unwrap();
                     info!("Open connection {}", ip);
@@ -78,14 +87,15 @@ fn main() -> Result<(), Error> {
                         cloned_config_ref,
                         cloned_last_processing_time_ref,
                         cloned_player_names_ref,
+                        cloned_players_counter_ref,
                     );
                     info!("Close connection {}", ip);
                 });
             }
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-                thread::sleep(Duration::from_millis(300));
+                thread::sleep(Duration::from_millis(50));
                 if term.load(Ordering::Relaxed) {
-                    info!("Server is shouting down");
+                    info!("Server is shutting down");
                     break;
                 }
             }

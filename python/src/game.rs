@@ -3,9 +3,10 @@ use std::sync::{Arc, Mutex};
 
 #[rustfmt::skip]
 use space_drive_game_core::game::{
-    Game        as _Game,
-    GameTrait   as _GameTrait,
-    GameStatus  as _GameStatus,
+    Game            as _Game,
+    GameTrait       as _GameTrait,
+    GameStatus      as _GameStatus,
+    RegisterPlayer  as _RegisterPlayer,
 };
 
 use super::map::Map;
@@ -25,7 +26,7 @@ impl Game {
         self.0.register_player(&player.0);
     }
 
-    fn process(&self, time: f64) {
+    fn process(&mut self, time: f64) {
         self.0.process(time);
     }
 

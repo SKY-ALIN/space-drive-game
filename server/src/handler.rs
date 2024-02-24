@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::Write;
 use std::net::{Shutdown, TcpStream};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 use space_drive_game_core::{
-    Game, GameTrait, Player, PlayerStatus as _PlayerStatus, PlayerTrait, ViewHit as _ViewHit,
-    ViewTrait,
+    Game, GameTrait, Player, PlayerStatus, PlayerTrait, RegisterPlayer, ViewHit, ViewTrait,
 };
 
 use crate::Config;
@@ -19,14 +19,14 @@ struct PlayerName {
 }
 
 #[derive(Serialize)]
-struct ViewHit {
+struct ViewHitSchema {
     object: String,
     distance: f64,
 }
 
 #[derive(Serialize)]
-struct View {
-    view: Vec<ViewHit>,
+struct ViewSchema {
+    view: Vec<ViewHitSchema>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -38,7 +38,7 @@ enum Action {
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case", tag = "result")]
-enum PlayerStatus {
+enum PlayerStatusSchema {
     Killed { by: String },
     Win,
 }
@@ -75,20 +75,20 @@ impl Connection {
     }
 }
 
-fn make_rasponse_from_view(view: Vec<_ViewHit>) -> View {
-    View {
+fn make_rasponse_from_view(view: Vec<ViewHit>) -> ViewSchema {
+    ViewSchema {
         view: view
             .into_iter()
             .map(|v| match v {
-                _ViewHit::Barrier(d) => ViewHit {
+                ViewHit::Barrier(d) => ViewHitSchema {
                     object: "BARRIER".to_string(),
                     distance: d,
                 },
-                _ViewHit::Border(d) => ViewHit {
+                ViewHit::Border(d) => ViewHitSchema {
                     object: "BORDER".to_string(),
                     distance: d,
                 },
-                _ViewHit::Enemy(d) => ViewHit {
+                ViewHit::Enemy(d) => ViewHitSchema {
                     object: "ENEMY".to_string(),
                     distance: d,
                 },
@@ -99,19 +99,22 @@ fn make_rasponse_from_view(view: Vec<_ViewHit>) -> View {
 
 pub fn handle_stream(
     stream: TcpStream,
-    game: Arc<Mutex<Game>>,
+    mut game: Arc<Mutex<Game>>,
     config: Arc<Config>,
     last_processing_time: Arc<Mutex<SystemTime>>,
     player_names: Arc<Mutex<HashMap<usize, String>>>,
+    players_counter: Arc<AtomicUsize>,
 ) -> Result<(), serde_json::Error> {
     let ip = stream.peer_addr().unwrap();
     let mut conn = Connection(stream);
     let player_name = conn.receive::<PlayerName>()?.name;
     let target = format!("{} ({})", ip, player_name);
     let target = target.as_str();
+    info!(target: target, "Player registered");
+
+    while players_counter.load(Ordering::SeqCst) != config.players_amount {}
 
     info!(target: target, "Start processing");
-
     let locked_game = game.lock().unwrap();
     let coordinates = locked_game.map.get_free_point(config.player_radius);
     drop(locked_game);
@@ -139,15 +142,15 @@ pub fn handle_stream(
         let mut locked_player = player.lock().unwrap();
 
         match locked_player.status {
-            _PlayerStatus::Win => {
-                conn.send(PlayerStatus::Win);
+            PlayerStatus::Win => {
+                conn.send(PlayerStatusSchema::Win);
                 break;
             }
-            _PlayerStatus::KilledBy(killer_id) => {
+            PlayerStatus::KilledBy(killer_id) => {
                 let locked_player_names = player_names.lock().unwrap();
                 let killer_name = locked_player_names.get(&killer_id).unwrap().clone();
                 drop(locked_player_names);
-                conn.send(PlayerStatus::Killed { by: killer_name });
+                conn.send(PlayerStatusSchema::Killed { by: killer_name });
                 break;
             }
             _ => {}

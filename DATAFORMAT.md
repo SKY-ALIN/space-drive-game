@@ -6,7 +6,7 @@ When a player connects to the server, they must register using a name:
 {"name": "player's name"}
 ```
 
-After that player is online and can act. Every request JSON must contain an `action` key.
+After that the player is online and can act. Every request JSON must contain an `action` key.
 
 If the action is `fire`, there is no need to put additional information:
 
@@ -22,7 +22,7 @@ If the action is `move`, the player must put `rotate` and `speed` keys:
 
 `rotate` is a relative angle change. `speed` is an absolute speed of forward movement.
 
-As a response, the player gets JSON with a `view` key that contains a list of rays. Every ray has `object` and `distance` kays.
+As a response, the player gets JSON with a `view` key that contains a list of rays. Every ray has `object` and `distance` values.
 
 ```json
 {
@@ -40,7 +40,7 @@ As a response, the player gets JSON with a `view` key that contains a list of ra
 
 `object` can be `BORDER` or `BARRIER` or `ENEMY`.
 
-When the player die or win, they get object with `result` ket instead of `view`:
+When the player dies or wins, they get object with `result` key instead of `view`:
 
 ```json
 {"result": "win"}

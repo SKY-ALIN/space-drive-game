@@ -262,7 +262,7 @@ impl ViewTrait for Arc<Mutex<Player>> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        game::{Game, GameTrait},
+        game::{Game, RegisterPlayer},
         map::{Barrier, Map},
     };
 
