@@ -12,7 +12,7 @@ use space_drive_game_core::{
 };
 
 use crate::config::Config;
-use crate::history::{GetState, History};
+use crate::history::History;
 
 #[derive(Serialize, Deserialize)]
 struct PlayerName {
@@ -183,14 +183,11 @@ pub fn handle_stream(
         {
             let mut locked_game = game.lock().unwrap();
             locked_game.process(timedelta.unwrap().as_secs_f64());
-            history
-                .lock()
-                .unwrap()
-                .add_state(locked_game.get_state(&now));
+            history.lock().unwrap().write_state(&locked_game, &now);
         }
     }
 
-    conn.close();
     info!(target: target, "Game over");
+    conn.close();
     Ok(())
 }

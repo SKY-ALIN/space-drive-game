@@ -17,6 +17,8 @@ const DEFAULT_PLAYERS_AMOUNT: usize = 2;
 pub struct Config {
     #[serde(default = "default_host")]
     pub host: SocketAddr,
+    #[serde(default = "default_backend")]
+    pub backend: String,
     #[serde(default = "default_map_width")]
     pub map_width: f64,
     #[serde(default = "default_map_height")]
@@ -43,6 +45,10 @@ pub struct Config {
 
 fn default_host() -> SocketAddr {
     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 3333)
+}
+
+fn default_backend() -> String {
+    "localhost:3334".to_string()
 }
 
 fn default_map_width() -> f64 {

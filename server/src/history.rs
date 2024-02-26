@@ -27,38 +27,6 @@ pub struct State {
     objects: Vec<Object>,
 }
 
-pub trait GetState {
-    fn get_state(&self, time: &SystemTime) -> State;
-}
-
-impl GetState for Game {
-    fn get_state(&self, time: &SystemTime) -> State {
-        let time = time.duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
-        let mut objects = Vec::new();
-
-        for missile in self.missiles.iter() {
-            objects.push(Object::Missile {
-                x: missile.x,
-                y: missile.y,
-                direction: missile.direction,
-            })
-        }
-
-        for player in self.players.iter() {
-            let locked_player = player.lock().unwrap();
-            objects.push(Object::Player {
-                x: locked_player.x,
-                y: locked_player.y,
-                r: locked_player.r,
-                direction: locked_player.direction,
-                id: locked_player.id,
-            })
-        }
-
-        State { time, objects }
-    }
-}
-
 #[derive(Serialize)]
 struct Barrier {
     x: f64,
@@ -107,7 +75,28 @@ impl History {
         }
     }
 
-    pub fn add_state(&mut self, state: State) {
-        self.history.push(state);
+    pub fn write_state(&mut self, game: &Game, time: &SystemTime) {
+        let time = time.duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+        let mut objects = Vec::new();
+
+        for missile in game.missiles.iter() {
+            objects.push(Object::Missile {
+                x: missile.x,
+                y: missile.y,
+                direction: missile.direction,
+            })
+        }
+
+        for player in game.players.iter() {
+            let locked_player = player.lock().unwrap();
+            objects.push(Object::Player {
+                x: locked_player.x,
+                y: locked_player.y,
+                r: locked_player.r,
+                direction: locked_player.direction,
+                id: locked_player.id,
+            })
+        }
+        self.history.push(State { time, objects });
     }
 }

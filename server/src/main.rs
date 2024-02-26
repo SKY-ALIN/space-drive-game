@@ -109,5 +109,12 @@ fn main() -> Result<(), Error> {
         }
     }
 
+    info!("Sending history to the backend service");
+    let data = &*history.lock().unwrap();
+    let _ = reqwest::blocking::Client::new()
+        .post(&config.backend)
+        .body(serde_json::to_string(&data).unwrap())
+        .send();
+
     Ok(())
 }
