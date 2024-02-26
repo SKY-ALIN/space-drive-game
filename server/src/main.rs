@@ -12,9 +12,11 @@ use space_drive_game_core::{Game, Map};
 
 mod config;
 mod handler;
+mod history;
 
 use config::Config;
 use handler::handle_stream;
+use history::History;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -54,6 +56,7 @@ fn main() -> Result<(), Error> {
             config.map_max_barrier_radius,
         ),
     };
+    let history = Arc::new(Mutex::new(History::new(&map)));
     let game = Game::create(map);
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
     let player_names: Arc<Mutex<HashMap<usize, String>>> = Arc::new(Mutex::new(HashMap::new()));
@@ -71,13 +74,13 @@ fn main() -> Result<(), Error> {
                     let _ = stream.shutdown(Shutdown::Both);
                     continue;
                 }
-                players_counter.store(players_counter_val + 1, Ordering::SeqCst);
 
                 let cloned_game_ref = Arc::clone(&game);
                 let cloned_config_ref = Arc::clone(&config);
                 let cloned_last_processing_time_ref = Arc::clone(&last_processing_time);
                 let cloned_player_names_ref = Arc::clone(&player_names);
                 let cloned_players_counter_ref = Arc::clone(&players_counter);
+                let cloned_history_ref = Arc::clone(&history);
                 thread::spawn(move || {
                     let ip = stream.peer_addr().unwrap();
                     info!("Open connection {}", ip);
@@ -88,6 +91,7 @@ fn main() -> Result<(), Error> {
                         cloned_last_processing_time_ref,
                         cloned_player_names_ref,
                         cloned_players_counter_ref,
+                        cloned_history_ref,
                     );
                     info!("Close connection {}", ip);
                 });
