@@ -98,14 +98,16 @@ fn make_rasponse_from_view(view: Vec<ViewHit>) -> ViewSchema {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn handle_stream(
     stream: TcpStream,
     game: Arc<Mutex<Game>>,
     config: Arc<Config>,
     last_processing_time: Arc<Mutex<SystemTime>>,
-    player_names: Arc<Mutex<HashMap<usize, String>>>,
+    player_names: Arc<Mutex<HashMap<usize, (String, String)>>>,
     players_counter: Arc<AtomicUsize>,
     history: Arc<Mutex<History>>,
+    winner_id: Arc<Mutex<Option<usize>>>,
 ) -> Result<(), serde_json::Error> {
     let ip = stream.peer_addr().unwrap();
     let mut conn = Connection(stream);
@@ -136,7 +138,7 @@ pub fn handle_stream(
     player_names
         .lock()
         .unwrap()
-        .insert(player.get_id(), player_name);
+        .insert(player.get_id(), (player_name, ip.to_string()));
     info!(target: target, "Game started");
 
     conn.send(make_rasponse_from_view(player.view()));
@@ -148,13 +150,17 @@ pub fn handle_stream(
 
         match locked_player.status {
             PlayerStatus::Win => {
+                info!(target: target, "Win");
+                let mut locked_winner_id = winner_id.lock().unwrap();
+                *locked_winner_id = Some(locked_player.id);
                 conn.send(PlayerStatusSchema::Win);
                 break;
             }
             PlayerStatus::KilledBy(killer_id) => {
                 let locked_player_names = player_names.lock().unwrap();
-                let killer_name = locked_player_names.get(&killer_id).unwrap().clone();
+                let (killer_name, killer_ip) = locked_player_names.get(&killer_id).unwrap().clone();
                 drop(locked_player_names);
+                info!(target: target, "Killed by {} ({})", killer_name, killer_ip);
                 conn.send(PlayerStatusSchema::Killed { by: killer_name });
                 break;
             }

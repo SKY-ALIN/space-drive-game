@@ -59,8 +59,10 @@ fn main() -> Result<(), Error> {
     let history = Arc::new(Mutex::new(History::new(&map)));
     let game = Game::create(map);
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
-    let player_names: Arc<Mutex<HashMap<usize, String>>> = Arc::new(Mutex::new(HashMap::new()));
+    let player_names: Arc<Mutex<HashMap<usize, (String, String)>>> =
+        Arc::new(Mutex::new(HashMap::new()));
     let players_counter = Arc::new(AtomicUsize::new(0));
+    let winner_id: Arc<Mutex<Option<usize>>> = Arc::new(Mutex::new(None));
 
     let term = Arc::new(AtomicBool::new(false));
     for sig in signal_hook::consts::TERM_SIGNALS {
@@ -81,6 +83,7 @@ fn main() -> Result<(), Error> {
                 let cloned_player_names_ref = Arc::clone(&player_names);
                 let cloned_players_counter_ref = Arc::clone(&players_counter);
                 let cloned_history_ref = Arc::clone(&history);
+                let cloned_winner_id_ref = Arc::clone(&winner_id);
                 thread::spawn(move || {
                     let ip = stream.peer_addr().unwrap();
                     info!("Open connection {}", ip);
@@ -92,6 +95,7 @@ fn main() -> Result<(), Error> {
                         cloned_player_names_ref,
                         cloned_players_counter_ref,
                         cloned_history_ref,
+                        cloned_winner_id_ref,
                     );
                     info!("Close connection {}", ip);
                 });
@@ -110,7 +114,15 @@ fn main() -> Result<(), Error> {
     }
 
     info!("Sending history to the backend service");
-    let data = &*history.lock().unwrap();
+    let data = &mut *history.lock().unwrap();
+    let locked_player_names = player_names.lock().unwrap();
+    let locked_winner_id = winner_id.lock().unwrap();
+    for (id, (name, ip)) in locked_player_names.iter() {
+        data.add_player(id, name, ip);
+        if locked_winner_id.is_some() && &locked_winner_id.unwrap() == id {
+            data.set_winner(id, name, ip);
+        }
+    }
     let _ = reqwest::blocking::Client::new()
         .post(&config.backend)
         .body(serde_json::to_string(&data).unwrap())

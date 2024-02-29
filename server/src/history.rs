@@ -5,12 +5,21 @@ use serde::Serialize;
 use space_drive_game_core::{Game, Map};
 
 #[derive(Serialize)]
+struct Player {
+    id: usize,
+    ip: String,
+    name: String,
+}
+
+#[derive(Serialize)]
 #[serde(rename_all = "snake_case", tag = "object")]
 enum Object {
     Missile {
         x: f64,
         y: f64,
         direction: f64,
+        id: usize,
+        player_id: usize,
     },
     Player {
         x: f64,
@@ -65,6 +74,8 @@ impl From<&Map> for MapState {
 pub struct History {
     map: MapState,
     history: Vec<State>,
+    players: Vec<Player>,
+    winner: Option<Player>,
 }
 
 impl History {
@@ -72,6 +83,8 @@ impl History {
         History {
             map: map.into(),
             history: Vec::new(),
+            players: Vec::new(),
+            winner: None,
         }
     }
 
@@ -84,6 +97,8 @@ impl History {
                 x: missile.x,
                 y: missile.y,
                 direction: missile.direction,
+                id: missile.id,
+                player_id: missile.player_id,
             })
         }
 
@@ -98,5 +113,21 @@ impl History {
             })
         }
         self.history.push(State { time, objects });
+    }
+
+    pub fn add_player(&mut self, id: &usize, name: &str, ip: &str) {
+        self.players.push(Player {
+            id: *id,
+            ip: ip.to_string(),
+            name: name.to_string(),
+        })
+    }
+
+    pub fn set_winner(&mut self, id: &usize, name: &str, ip: &str) {
+        self.winner = Some(Player {
+            id: *id,
+            ip: ip.to_string(),
+            name: name.to_string(),
+        });
     }
 }
