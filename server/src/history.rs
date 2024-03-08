@@ -76,19 +76,31 @@ pub struct History {
     history: Vec<State>,
     players: Vec<Player>,
     winner: Option<Player>,
+    #[serde(skip_serializing)]
+    optimization_rate: u8,
+    #[serde(skip_serializing)]
+    current_iteration: u8,
 }
 
 impl History {
-    pub fn new(map: &Map) -> Self {
+    pub fn new(map: &Map, optimization_rate: u8) -> Self {
         History {
             map: map.into(),
             history: Vec::new(),
             players: Vec::new(),
             winner: None,
+            current_iteration: 0,
+            optimization_rate,
         }
     }
 
     pub fn write_state(&mut self, game: &Game, time: &SystemTime) {
+        if self.current_iteration < self.optimization_rate {
+            self.current_iteration += 1;
+            return;
+        }
+        self.current_iteration = 0;
+
         let time = time.duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
         let mut objects = Vec::new();
 

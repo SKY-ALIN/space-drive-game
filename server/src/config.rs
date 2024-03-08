@@ -1,17 +1,18 @@
 use serde::Deserialize;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
-const DEFAULT_MAP_WIDTH: f64 = 1500.0;
-const DEFAULT_MAP_HEIGHT: f64 = 1000.0;
-const DEFAULT_MAP_BARRIERS_AMOUNT: u8 = 50;
-const DEFAULT_MAP_MAX_BARRIER_RADIUS: f64 = 50.0;
+const DEFAULT_MAP_WIDTH: f64 = 960.0;
+const DEFAULT_MAP_HEIGHT: f64 = 540.0;
+const DEFAULT_MAP_BARRIERS_AMOUNT: u8 = 30;
+const DEFAULT_MAP_MAX_BARRIER_RADIUS: f64 = 40.0;
 const DEFAULT_MAP_SEED: Option<u64> = None;
-const DEFAULT_PLAYER_RADIUS: f64 = 5.0;
-const DEFAULT_PLAYER_MAX_SPEED: f64 = 2.0;
+const DEFAULT_PLAYER_RADIUS: f64 = 10.0;
+const DEFAULT_PLAYER_MAX_SPEED: f64 = 960.0;
 const DEFAULT_PLAYER_VIEW_ANGLE: f64 = 30.0;
-const DEFAULT_PLAYER_RAYS_AMOUNT: u16 = 13;
-const DEFAULT_PLAYER_MISSILE_SPEED: f64 = 5.0;
+const DEFAULT_PLAYER_RAYS_AMOUNT: u16 = 21;
+const DEFAULT_PLAYER_MISSILE_SPEED: f64 = 2880.0;
 const DEFAULT_PLAYERS_AMOUNT: usize = 2;
+const DEFAULT_HISTORY_OPTIMIZATION_RATE: u8 = 30;
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -41,6 +42,8 @@ pub struct Config {
     pub player_missile_speed: f64,
     #[serde(default = "default_players_amount")]
     pub players_amount: usize,
+    #[serde(default = "default_history_optimization_rate")]
+    pub history_optimization_rate: u8,
 }
 
 fn default_host() -> SocketAddr {
@@ -48,7 +51,7 @@ fn default_host() -> SocketAddr {
 }
 
 fn default_backend() -> String {
-    "localhost:3334".to_string()
+    "0.0.0.0:3334".to_string()
 }
 
 fn default_map_width() -> f64 {
@@ -93,6 +96,10 @@ fn default_player_missile_speed() -> f64 {
 
 fn default_players_amount() -> usize {
     DEFAULT_PLAYERS_AMOUNT
+}
+
+fn default_history_optimization_rate() -> u8 {
+    DEFAULT_HISTORY_OPTIMIZATION_RATE
 }
 
 impl Config {

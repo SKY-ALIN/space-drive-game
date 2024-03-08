@@ -1,7 +1,8 @@
-use log::{error, info};
+use log::{error, info, debug};
 use std::collections::HashMap;
 use std::env;
 use std::io;
+use std::fs;
 use std::net::{Shutdown, TcpListener};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -28,7 +29,7 @@ pub enum Error {
 
 fn main() -> Result<(), Error> {
     if env::var("RUST_LOG").is_err() {
-        env::set_var("RUST_LOG", "debug")
+        env::set_var("RUST_LOG", "info")
     }
     if env::var("RUST_LOG_STYLE").is_err() {
         env::set_var("RUST_LOG_STYLE", "always")
@@ -56,7 +57,7 @@ fn main() -> Result<(), Error> {
             config.map_max_barrier_radius,
         ),
     };
-    let history = Arc::new(Mutex::new(History::new(&map)));
+    let history = Arc::new(Mutex::new(History::new(&map, config.history_optimization_rate)));
     let game = Game::create(map);
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
     let player_names: Arc<Mutex<HashMap<usize, (String, String)>>> =
@@ -123,6 +124,8 @@ fn main() -> Result<(), Error> {
             data.set_winner(id, name, ip);
         }
     }
+    debug!("{}", serde_json::to_string(&data).unwrap());
+    let _ = fs::write("res.json", serde_json::to_string(&data).unwrap());
     let _ = reqwest::blocking::Client::new()
         .post(&config.backend)
         .body(serde_json::to_string(&data).unwrap())

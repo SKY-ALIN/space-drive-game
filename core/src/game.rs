@@ -39,14 +39,6 @@ pub trait RegisterPlayer {
     fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>);
 }
 
-impl RegisterPlayer for Mutex<Game> {
-    fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>) {
-        player.lock().unwrap().mount_game(Arc::clone(self));
-        let mut game = self.lock().unwrap();
-        game.players.push(Arc::clone(player));
-    }
-}
-
 impl GameTrait for Game {
     fn process(&mut self, time: f64) {
         let Game {
@@ -168,6 +160,14 @@ impl GameTrait for Game {
 impl GameTrait for Arc<Mutex<Game>> {
     fn process(&mut self, time: f64) {
         self.lock().unwrap().process(time);
+    }
+}
+
+impl RegisterPlayer for Mutex<Game> {
+    fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>) {
+        player.lock().unwrap().mount_game(Arc::clone(self));
+        let mut game = self.lock().unwrap();
+        game.players.push(Arc::clone(player));
     }
 }
 

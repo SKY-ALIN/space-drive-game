@@ -5,7 +5,7 @@ use std::io::Write;
 use std::net::{Shutdown, TcpStream};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use space_drive_game_core::{
     Game, GameTrait, Player, PlayerStatus, PlayerTrait, RegisterPlayer, ViewHit, ViewTrait,
@@ -188,7 +188,7 @@ pub fn handle_stream(
         *locked_last_processing_time = now;
         {
             let mut locked_game = game.lock().unwrap();
-            locked_game.process(timedelta.unwrap().as_secs_f64());
+            locked_game.process(timedelta.unwrap_or(Duration::from_micros(1)).as_secs_f64());
             history.lock().unwrap().write_state(&locked_game, &now);
         }
     }
