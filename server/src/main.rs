@@ -1,8 +1,8 @@
-use log::{error, info, debug};
+use log::{debug, error, info};
 use std::collections::HashMap;
 use std::env;
-use std::io;
 use std::fs;
+use std::io;
 use std::net::{Shutdown, TcpListener};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -57,7 +57,10 @@ fn main() -> Result<(), Error> {
             config.map_max_barrier_radius,
         ),
     };
-    let history = Arc::new(Mutex::new(History::new(&map, config.history_optimization_rate)));
+    let history = Arc::new(Mutex::new(History::new(
+        &map,
+        config.history_optimization_rate,
+    )));
     let game = Game::create(map);
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
     let player_names: Arc<Mutex<HashMap<usize, (String, String)>>> =
