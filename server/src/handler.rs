@@ -5,13 +5,14 @@ use std::io::Write;
 use std::net::{Shutdown, TcpStream};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use space_drive_game_core::{
     Game, GameTrait, Player, PlayerStatus, PlayerTrait, RegisterPlayer, ViewHit, ViewTrait,
 };
 
-use crate::Config;
+use crate::config::Config;
+use crate::history::History;
 
 #[derive(Serialize, Deserialize)]
 struct PlayerName {
@@ -97,28 +98,33 @@ fn make_rasponse_from_view(view: Vec<ViewHit>) -> ViewSchema {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn handle_stream(
     stream: TcpStream,
-    mut game: Arc<Mutex<Game>>,
+    game: Arc<Mutex<Game>>,
     config: Arc<Config>,
     last_processing_time: Arc<Mutex<SystemTime>>,
-    player_names: Arc<Mutex<HashMap<usize, String>>>,
+    player_names: Arc<Mutex<HashMap<usize, (String, String)>>>,
     players_counter: Arc<AtomicUsize>,
+    history: Arc<Mutex<History>>,
+    winner_id: Arc<Mutex<Option<usize>>>,
 ) -> Result<(), serde_json::Error> {
     let ip = stream.peer_addr().unwrap();
     let mut conn = Connection(stream);
     let player_name = conn.receive::<PlayerName>()?.name;
     let target = format!("{} ({})", ip, player_name);
     let target = target.as_str();
-    info!(target: target, "Player registered");
 
+    info!(target: target, "Wait for other players");
+    let players_counter_val = players_counter.load(Ordering::Relaxed);
+    players_counter.store(players_counter_val + 1, Ordering::SeqCst);
     while players_counter.load(Ordering::SeqCst) != config.players_amount {}
 
-    info!(target: target, "Start processing");
-    let locked_game = game.lock().unwrap();
-    let coordinates = locked_game.map.get_free_point(config.player_radius);
-    drop(locked_game);
-
+    let coordinates = game
+        .lock()
+        .unwrap()
+        .map
+        .get_free_point(config.player_radius);
     let player = Player::create(
         coordinates.0,
         coordinates.1,
@@ -129,10 +135,11 @@ pub fn handle_stream(
         config.player_missile_speed,
     );
     game.register_player(&player);
-
-    let mut locked_player_names = player_names.lock().unwrap();
-    locked_player_names.insert(player.get_id(), player_name);
-    drop(locked_player_names);
+    player_names
+        .lock()
+        .unwrap()
+        .insert(player.get_id(), (player_name, ip.to_string()));
+    info!(target: target, "Game started");
 
     conn.send(make_rasponse_from_view(player.view()));
 
@@ -143,13 +150,17 @@ pub fn handle_stream(
 
         match locked_player.status {
             PlayerStatus::Win => {
+                info!(target: target, "Win");
+                let mut locked_winner_id = winner_id.lock().unwrap();
+                *locked_winner_id = Some(locked_player.id);
                 conn.send(PlayerStatusSchema::Win);
                 break;
             }
             PlayerStatus::KilledBy(killer_id) => {
                 let locked_player_names = player_names.lock().unwrap();
-                let killer_name = locked_player_names.get(&killer_id).unwrap().clone();
+                let (killer_name, killer_ip) = locked_player_names.get(&killer_id).unwrap().clone();
                 drop(locked_player_names);
+                info!(target: target, "Killed by {} ({})", killer_name, killer_ip);
                 conn.send(PlayerStatusSchema::Killed { by: killer_name });
                 break;
             }
@@ -175,10 +186,14 @@ pub fn handle_stream(
         let mut locked_last_processing_time = last_processing_time.lock().unwrap();
         let timedelta = now.duration_since(*locked_last_processing_time);
         *locked_last_processing_time = now;
-        game.process(timedelta.unwrap().as_secs_f64());
+        {
+            let mut locked_game = game.lock().unwrap();
+            locked_game.process(timedelta.unwrap_or(Duration::from_micros(1)).as_secs_f64());
+            history.lock().unwrap().write_state(&locked_game, &now);
+        }
     }
 
+    info!(target: target, "Game over");
     conn.close();
-    info!(target: target, "Finish processing");
     Ok(())
 }
