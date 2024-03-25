@@ -12,4 +12,4 @@ name = "space_drive_game_core"
 
 [dependencies]
 rand = "0.8.5"
-noise = "0.8.2"
+noise = "0.9.0"
