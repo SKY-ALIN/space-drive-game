@@ -15,7 +15,7 @@ serde_json = "1.0.114"
 envy = "0.4.2"
 thiserror = "1.0.57"
 signal-hook = "0.3.17"
-reqwest = { version = "0.11.24", features = ["blocking"] }
+reqwest = { version = "0.12.1", features = ["blocking"] }
 
 [dependencies.space_drive_game_core]
 path = "../core"
