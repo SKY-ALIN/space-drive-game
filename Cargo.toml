@@ -9,4 +9,4 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["Vladimir Alinsky <Vladimir@Alinsky.tech>", "Vsevolod Zolotov <vsezold@gmail.com>", "Konstantin Alaev <alaevdev@gmail.com>"]
+authors = ["Vladimir Alinsky <Vladimir@Alinsky.tech>"]

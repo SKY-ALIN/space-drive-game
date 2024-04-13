@@ -29,7 +29,7 @@ impl Player {
         direction: Option<f64>,
     ) -> Self {
         match direction {
-            Some(d) => Player(_Player::create_with_direction(
+            Some(d) => Player(_Player::new_with_direction(
                 x,
                 y,
                 r,
@@ -39,7 +39,7 @@ impl Player {
                 d,
                 missile_speed,
             )),
-            None => Player(_Player::create(
+            None => Player(_Player::new(
                 x,
                 y,
                 r,

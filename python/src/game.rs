@@ -19,7 +19,7 @@ pub struct Game(Arc<Mutex<_Game>>);
 impl Game {
     #[new]
     pub fn new(map: &Map) -> Self {
-        Game(_Game::create(map.0.clone()))
+        Game(_Game::new(map.0.clone()))
     }
 
     pub fn register_player(&self, player: &Player) {
@@ -35,6 +35,8 @@ impl Game {
             .lock()
             .unwrap()
             .missiles
+            .lock()
+            .unwrap()
             .iter()
             .map(|m| (m.x, m.y))
             .collect()
