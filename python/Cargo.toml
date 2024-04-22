@@ -12,7 +12,7 @@ name = "space_drive_game"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.20.3"
+pyo3 = "0.21.2"
 
 [dependencies.space_drive_game_core]
 path = "../core"
