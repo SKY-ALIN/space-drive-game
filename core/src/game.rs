@@ -15,16 +15,16 @@ pub enum GameStatus {
 pub struct Game {
     pub map: Map,
     pub players: Vec<Arc<Mutex<Player>>>,
-    pub missiles: Vec<Missile>,
+    pub missiles: Arc<Mutex<Vec<Missile>>>,
     pub status: GameStatus,
 }
 
 impl Game {
-    pub fn create(map: Map) -> Arc<Mutex<Self>> {
+    pub fn new(map: Map) -> Arc<Mutex<Self>> {
         let game = Game {
             map,
             players: Vec::new(),
-            missiles: Vec::new(),
+            missiles: Arc::new(Mutex::new(Vec::new())),
             status: GameStatus::On,
         };
         Arc::new(Mutex::new(game))
@@ -123,18 +123,21 @@ impl GameTrait for Game {
                 break;
             }
 
-            for missile in missiles.iter_mut() {
+            let mut locked_missiles = missiles.lock().unwrap();
+
+            for missile in locked_missiles.iter_mut() {
                 missile.x += (missile.direction * PI / 180.0).sin() * missile.speed * timedelta;
                 missile.y += (missile.direction * PI / 180.0).cos() * missile.speed * timedelta;
             }
 
             // Borders collision
 
-            missiles.retain(|m| m.x >= 0.0 && m.y >= 0.0 && m.x <= map.width && m.y <= map.height);
+            locked_missiles
+                .retain(|m| m.x >= 0.0 && m.y >= 0.0 && m.x <= map.width && m.y <= map.height);
 
             // Barriers collision
 
-            missiles.retain(|m| {
+            locked_missiles.retain(|m| {
                 map.barriers
                     .iter()
                     .all(|b| ((m.x - b.x).powi(2) + (m.y - b.y).powi(2)).sqrt() >= b.r)
@@ -142,7 +145,7 @@ impl GameTrait for Game {
 
             // Players collision
 
-            missiles.retain(|m| {
+            locked_missiles.retain(|m| {
                 players.iter().map(|p| p.lock().unwrap()).all(|mut p| {
                     let is_collision = m.player_id != p.id
                         && ((m.x - p.x).powi(2) + (m.y - p.y).powi(2)).sqrt() < p.r
@@ -165,7 +168,7 @@ impl GameTrait for Arc<Mutex<Game>> {
 
 impl RegisterPlayer for Mutex<Game> {
     fn register_player(self: &Arc<Self>, player: &Arc<Mutex<Player>>) {
-        player.lock().unwrap().mount_game(Arc::clone(self));
+        player.lock().unwrap().mount_game(self);
         let mut game = self.lock().unwrap();
         game.players.push(Arc::clone(player));
     }
@@ -190,14 +193,14 @@ mod tests {
     }
 
     fn get_stub_player() -> Arc<Mutex<Player>> {
-        Player::create_with_direction(99.0, 99.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED)
+        Player::new_with_direction(99.0, 99.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED)
     }
 
     #[test]
     fn test_movement() {
-        let mut p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let mut p = Player::new_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let mut game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
+        let mut game = Game::new(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
         p.set_speed(0.5);
@@ -212,10 +215,9 @@ mod tests {
 
     #[test]
     fn test_borders_collision() {
-        let mut p =
-            Player::create_with_direction(1.0, 1.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED);
+        let mut p = Player::new_with_direction(1.0, 1.0, 0.5, 1.0, 60.0, 7, -180.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let mut game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
+        let mut game = Game::new(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
         p.set_speed(1.0);
@@ -230,7 +232,7 @@ mod tests {
 
     #[test]
     fn test_barriers_collision() {
-        let mut p = Player::create_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+        let mut p = Player::new_with_direction(1.0, 1.0, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
         let mut map = Map::new(100.0, 100.0, 0, 0.0, SEED);
         map.barriers.push(Barrier {
@@ -243,7 +245,7 @@ mod tests {
             y: 1.0,
             r: 1.0,
         });
-        let mut game = Game::create(map);
+        let mut game = Game::new(map);
         game.register_player(&p);
         game.register_player(&stub_p);
         p.set_speed(1.0);
@@ -262,14 +264,15 @@ mod tests {
         const START_Y: f64 = 1.0;
 
         let mut p =
-            Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+            Player::new_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let mut game = Game::create(Map::new(100.0, 100.0, 0, 0.0, SEED));
+        let mut game = Game::new(Map::new(100.0, 100.0, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
 
         {
-            let missiles = &game.lock().unwrap().missiles;
+            let locked_game = game.lock().unwrap();
+            let missiles = locked_game.missiles.lock().unwrap();
             assert_eq!(missiles.len(), 0);
         }
 
@@ -280,7 +283,8 @@ mod tests {
         game.process(1.0);
 
         {
-            let missiles = &game.lock().unwrap().missiles;
+            let locked_game = game.lock().unwrap();
+            let missiles = locked_game.missiles.lock().unwrap();
 
             // Checking for missiles after launch
             // Checking constant speed and position change
@@ -295,7 +299,8 @@ mod tests {
 
         game.process(4.0);
 
-        let missiles = &game.lock().unwrap().missiles;
+        let locked_game = game.lock().unwrap();
+        let missiles = locked_game.missiles.lock().unwrap();
 
         // Checking constant speed and position change
         assert_eq!(missiles[0].speed, MISSILE_SPEED);
@@ -314,9 +319,9 @@ mod tests {
         const MAP_SIZE: f64 = 100.0;
 
         let mut p =
-            Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
+            Player::new_with_direction(START_X, START_Y, 1.0, 1.0, 60.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
-        let mut game = Game::create(Map::new(MAP_SIZE, MAP_SIZE, 0, 0.0, SEED));
+        let mut game = Game::new(Map::new(MAP_SIZE, MAP_SIZE, 0, 0.0, SEED));
         game.register_player(&p);
         game.register_player(&stub_p);
 
@@ -333,7 +338,8 @@ mod tests {
         game.process(49.0);
 
         {
-            let missiles = &game.lock().unwrap().missiles;
+            let locked_game = game.lock().unwrap();
+            let missiles = locked_game.missiles.lock().unwrap();
             assert_eq!(missiles.len(), 4);
 
             // Make sure the missiles are still there and their position has changed.
@@ -364,7 +370,8 @@ mod tests {
 
         game.process(2.0);
 
-        let missiles = &game.lock().unwrap().missiles;
+        let locked_game = game.lock().unwrap();
+        let missiles = locked_game.missiles.lock().unwrap();
         // Check if the missiles were destroyed after the collision
         assert_eq!(missiles.len(), 0);
     }
@@ -377,8 +384,7 @@ mod tests {
         const TARGET_X: f64 = 10.0;
         const TARGET_Y: f64 = 20.0;
 
-        let p =
-            Player::create_with_direction(START_X, START_Y, 1.0, 1.0, 90.0, 7, 0.0, MISSILE_SPEED);
+        let p = Player::new_with_direction(START_X, START_Y, 1.0, 1.0, 90.0, 7, 0.0, MISSILE_SPEED);
         let stub_p = get_stub_player();
         let mut map = Map::new(100.0, 100.0, 0, 0.0, SEED);
         map.barriers.push(Barrier {
@@ -386,7 +392,7 @@ mod tests {
             y: TARGET_Y,
             r: 1.0,
         });
-        let mut game = Game::create(map);
+        let mut game = Game::new(map);
         game.register_player(&p);
         game.register_player(&stub_p);
 
@@ -394,7 +400,8 @@ mod tests {
         p.fire();
 
         {
-            let missiles = &game.lock().unwrap().missiles;
+            let locked_game = game.lock().unwrap();
+            let missiles = locked_game.missiles.lock().unwrap();
             assert_eq!(missiles.len(), 1);
         }
 
@@ -403,7 +410,8 @@ mod tests {
 
         {
             // Check updated position before collision
-            let missiles = &game.lock().unwrap().missiles;
+            let locked_game = game.lock().unwrap();
+            let missiles = locked_game.missiles.lock().unwrap();
             assert_eq!(missiles[0].x, START_X);
             assert_eq!(round_position(missiles[0].y), START_Y + 8.0);
         }
@@ -411,7 +419,8 @@ mod tests {
         game.process(1.0);
 
         {
-            let missiles = &game.lock().unwrap().missiles;
+            let locked_game = game.lock().unwrap();
+            let missiles = locked_game.missiles.lock().unwrap();
             // Check if the missile was destroyed after the collision
             assert_eq!(missiles.len(), 0);
         }

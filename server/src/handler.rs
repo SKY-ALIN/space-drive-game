@@ -125,7 +125,7 @@ pub fn handle_stream(
         .unwrap()
         .map
         .get_free_point(config.player_radius);
-    let player = Player::create(
+    let player = Player::new(
         coordinates.0,
         coordinates.1,
         config.player_radius,
@@ -169,8 +169,7 @@ pub fn handle_stream(
 
         match action {
             Action::Fire => {
-                info!(target: target, "Fire");
-                locked_player.fire()
+                locked_player.fire();
             }
             Action::Move { rotate, speed } => {
                 info!(target: target, "Move rotate={}, speed={}", rotate, speed);

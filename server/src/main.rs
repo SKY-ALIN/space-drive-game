@@ -61,7 +61,7 @@ fn main() -> Result<(), Error> {
         &map,
         config.history_optimization_rate,
     )));
-    let game = Game::create(map);
+    let game = Game::new(map);
     let last_processing_time = Arc::new(Mutex::new(SystemTime::now()));
     let player_names: Arc<Mutex<HashMap<usize, (String, String)>>> =
         Arc::new(Mutex::new(HashMap::new()));

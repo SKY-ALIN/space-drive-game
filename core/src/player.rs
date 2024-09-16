@@ -44,13 +44,14 @@ pub struct Player {
     view_angle: f64,
     rays_amount: u16,
     game: Weak<Mutex<Game>>,
+    missiles: Weak<Mutex<Vec<Missile>>>,
     pub id: usize,
     missile_speed: f64,
     pub status: PlayerStatus,
 }
 
 impl Player {
-    pub fn create(
+    pub fn new(
         x: f64,
         y: f64,
         r: f64,
@@ -69,6 +70,7 @@ impl Player {
             view_angle,
             rays_amount,
             game: Weak::new(),
+            missiles: Weak::new(),
             id: get_id(),
             missile_speed,
             status: PlayerStatus::InGame,
@@ -77,7 +79,7 @@ impl Player {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn create_with_direction(
+    pub fn new_with_direction(
         x: f64,
         y: f64,
         r: f64,
@@ -97,6 +99,7 @@ impl Player {
             view_angle,
             rays_amount,
             game: Weak::new(),
+            missiles: Weak::new(),
             id: get_id(),
             missile_speed,
             status: PlayerStatus::InGame,
@@ -104,8 +107,9 @@ impl Player {
         Arc::new(Mutex::new(player))
     }
 
-    pub fn mount_game(&mut self, game: Arc<Mutex<Game>>) {
-        self.game = Arc::downgrade(&game);
+    pub fn mount_game(&mut self, game: &Arc<Mutex<Game>>) {
+        self.game = Arc::downgrade(game);
+        self.missiles = Arc::downgrade(&game.lock().unwrap().missiles);
     }
 }
 
@@ -158,13 +162,13 @@ impl PlayerTrait for Player {
     }
 
     fn fire(&self) {
-        let weak_game = self.game.upgrade();
-        if weak_game.is_none() {
+        let weak_missiles = self.missiles.upgrade();
+        if weak_missiles.is_none() {
             return;
         }
-        let mutex_game = weak_game.unwrap();
-        let mut game = mutex_game.lock().unwrap();
-        game.missiles.push(Missile {
+        let mutex_missiles = weak_missiles.unwrap();
+        let mut missiles = mutex_missiles.lock().unwrap();
+        missiles.push(Missile {
             x: self.x,
             y: self.y,
             direction: self.direction,
@@ -279,7 +283,7 @@ mod tests {
     const MISSILE_SPEED: f64 = 1.0;
 
     fn get_player() -> Arc<Mutex<Player>> {
-        Player::create_with_direction(
+        Player::new_with_direction(
             X,
             Y,
             R,
@@ -317,8 +321,8 @@ mod tests {
             y: 100.0,
             r: 10.0,
         });
-        let game = Game::create(map);
-        let mut p = Player::create_with_direction(
+        let game = Game::new(map);
+        let mut p = Player::new_with_direction(
             50.0,
             50.0,
             10.0,
@@ -328,7 +332,7 @@ mod tests {
             DIRECTION,
             MISSILE_SPEED,
         );
-        let p2 = Player::create(100.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGLE, 0, MISSILE_SPEED);
+        let p2 = Player::new(100.0, 50.0, 10.0, MAX_SPEED, VIEW_ANGLE, 0, MISSILE_SPEED);
         game.register_player(&p);
         game.register_player(&p2);
 
@@ -342,14 +346,15 @@ mod tests {
     #[test]
     fn test_fire() {
         let map = Map::new_without_seed(100.0, 100.0, 0, 0.0);
-        let mutex_game = Game::create(map);
+        let game = Game::new(map);
         let mutex_player = get_player();
-        mutex_game.register_player(&mutex_player);
+        game.register_player(&mutex_player);
 
         mutex_player.fire();
 
-        let game = mutex_game.lock().unwrap();
-        let missile = game.missiles.first().unwrap();
+        let locked_game = game.lock().unwrap();
+        let locked_missiles = locked_game.missiles.lock().unwrap();
+        let missile = locked_missiles.first().unwrap();
         let player = mutex_player.lock().unwrap();
 
         assert_eq!(missile.player_id, player.id);

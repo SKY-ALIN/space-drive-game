@@ -104,7 +104,7 @@ impl History {
         let time = time.duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
         let mut objects = Vec::new();
 
-        for missile in game.missiles.iter() {
+        for missile in game.missiles.lock().unwrap().iter() {
             objects.push(Object::Missile {
                 x: missile.x,
                 y: missile.y,

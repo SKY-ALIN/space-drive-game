@@ -15,7 +15,7 @@ pub fn get_authors() -> Vec<String> {
 }
 
 #[pymodule]
-fn space_drive_game(_py: Python, m: &PyModule) -> PyResult<()> {
+fn space_drive_game(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", get_version())?;
     m.add("__authors__", get_authors())?;
     m.add_class::<game::Game>()?;
